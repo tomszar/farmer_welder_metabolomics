@@ -30,3 +30,22 @@ And then, activate the environment
 ```bash
 conda activate farmer_welder
 ```
+
+## Data
+
+Create the `data` folder:
+
+```bash
+mkdir data
+```
+
+And place the following data files into the `data` folder.
+All of these files can be found in the Penn State Roar's path `mah546/default/datasets/welder_farmer_study/`
+
+## Results
+
+Results will be exported to the `results` folder, so you'll need to create it first:
+
+```bash
+mkdir results
+```
