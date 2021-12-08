@@ -38,3 +38,20 @@ def concentration_violinplot(D,
     plt.tight_layout()
     plt.savefig('../results/metabolites_violinplot.pdf',
                 dpi=600)
+
+
+def plot_pca_scores(pca_scores):
+    '''
+    Plot the PCA scores
+
+    Parameters
+    ----------
+    pca_scores: np.ndarray
+    '''
+    fig, ax = plt.subplots(figsize=(8, 8))
+    ax.scatter(pca_scores[:, 0],
+               pca_scores[:, 1])
+
+    plt.tight_layout()
+    plt.savefig('../results/metabolites_pca.pdf',
+                dpi=600)
