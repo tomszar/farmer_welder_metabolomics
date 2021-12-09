@@ -1,3 +1,4 @@
+import load
 import stats
 import figures
 import numpy as np
@@ -12,3 +13,8 @@ figures.concentration_violinplot(concen)
 # PCA
 pca_scores = stats.generate_PCA(concen)
 figures.plot_pca_scores(pca_scores)
+
+# Complete dataset
+dat = load.load_complete_data()
+dat.to_csv('../results/merged_data.csv',
+           index=False)
