@@ -49,3 +49,11 @@ Results will be exported to the `results` folder, so you'll need to create it fi
 ```bash
 mkdir results
 ```
+
+## Run analysis
+
+To run the analysis, in the terminal type (make sure you've activated the conda environment):
+
+```bash
+bash run_local.sh
+```
