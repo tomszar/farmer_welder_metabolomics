@@ -39,8 +39,7 @@ Create the `data` folder:
 mkdir data
 ```
 
-And place the following data files into the `data` folder.
-All of these files can be found in the Penn State Roar's path `mah546/default/datasets/welder_farmer_study/`
+And copy all the files located in the Penn State Roar's path `mah546/default/datasets/welder_farmer_study/`
 
 ## Results
 
