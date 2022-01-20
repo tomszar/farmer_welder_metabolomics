@@ -40,18 +40,40 @@ def concentration_violinplot(D,
                 dpi=600)
 
 
-def plot_pca_scores(pca_scores):
+def plot_pca_scores(pca_scores,
+                    groups=None,
+                    continuous=None,
+                    filename='metabolites_pca'):
     '''
     Plot the PCA scores
 
     Parameters
     ----------
     pca_scores: np.ndarray
+        scores from a PCA
+    groups: np.array
+        grouping categories to plot
+    continuous: np.array
+        continuous variable to use for color
+    filename: str
+        name of figure file
     '''
     fig, ax = plt.subplots(figsize=(8, 8))
-    ax.scatter(pca_scores[:, 0],
-               pca_scores[:, 1])
+    if groups is not None and continuous is not None:
+        print('Cannot plot groups and continuous at the same time')
+    elif groups is not None:
+        for i in np.unique(groups):
+            b = groups == i
+            ax.scatter(pca_scores[b, 0],
+                       pca_scores[b, 1])
+    elif continuous is not None:
+        ax.scatter(pca_scores[:, 0],
+                   pca_scores[:, 1],
+                   c=continuous)
+    else:
+        ax.scatter(pca_scores[:, 0],
+                   pca_scores[:, 1])
 
     plt.tight_layout()
-    plt.savefig('../results/metabolites_pca.pdf',
+    plt.savefig('../results/' + filename + '.pdf',
                 dpi=600)
