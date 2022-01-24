@@ -1,10 +1,14 @@
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.lines as mlines
+
+from matplotlib import cm
 
 
 def concentration_violinplot(D,
-                             transform=False):
+                             group_by: list = None,
+                             transform: bool = False,
+                             filename: str = 'metabolites_violinplot.pdf'):
     '''
     Plot a violinplot from metabolite concentration values.
 
@@ -12,31 +16,86 @@ def concentration_violinplot(D,
     ----------
     D: pd.DataFrame
         Dataframe with concentration values
+    group_by: list of str
+        List with group names to use
     transform: bool
         Whether to log2 transform the concentration values or not
+    filename: str
+        File name of the figure with extension
     '''
     if transform:
         D = np.log2(D)
 
-    def set_axis_style(ax, labels):
+    def set_axis_style(ax, labels, n_groups=1):
         ax.yaxis.set_tick_params(direction='out',
                                  labelrotation=10,
                                  labelsize=10)
-        ax.set_yticks(np.arange(1, len(labels) + 1), labels=labels)
-        ax.set_ylim(0.25, len(labels) + 0.75)
+        if n_groups > 1:
+            ticks = np.arange(1, (len(labels) * (n_groups + 1)) + 1)
+            base_bool = list(np.repeat(True, n_groups))
+            base_bool.append(False)
+            select_bool = base_bool * len(labels)
+            pos = ticks[select_bool]
+            label_pos = []
+            for i in range(0, len(pos), n_groups):
+                max_ind = i + n_groups - 1
+                lp = (pos[i] + pos[max_ind]) / 2
+                label_pos.append(lp)
+        else:
+            pos = np.arange(1, len(labels) + 1)
+            label_pos = pos
+            ax.set_ylim(0.25, len(labels) + 0.75)
+
+        ax.set_yticks(label_pos, labels=labels)
         ax.set_ylabel('Metabolite name')
+        return(pos)
 
     # Violin plot
+    colors = cm.get_cmap('Set2')
     fig, ax = plt.subplots(figsize=(8, 12))
     ax.set_title('Metabolite concentration values')
     ax.set_xlabel('Log2 concentration')
-    ax.violinplot(D,
-                  widths=1,
-                  vert=False)
     lab = list(D.columns)
-    set_axis_style(ax, lab)
-    plt.tight_layout()
-    plt.savefig('../results/metabolites_violinplot.pdf',
+    if group_by is not None:
+        patches = []
+        n_groups = len(group_by.unique())
+        pos = set_axis_style(ax, lab, n_groups)
+        for i in range(n_groups):
+            p = mlines.Line2D([], [],
+                              color=colors(i),
+                              marker='o',
+                              label=group_by.unique()[i],
+                              ms=10,
+                              ls='-')
+            patches.append(p)
+        ax.legend(handles=patches)
+    else:
+        n_groups = 1
+        pos = set_axis_style(ax, lab)
+
+    for g in range(n_groups):
+        if group_by is not None:
+            sub = group_by.unique()[g]
+            subjects = group_by == sub
+            list_indices = [*range(g, len(pos), n_groups)]
+            pos_m = [pos[i] for i in list_indices]
+        else:
+            subjects = np.repeat(True, len(D))
+            pos_m = pos
+
+        Dm = D.loc[subjects, :]
+        parts = ax.violinplot(Dm,
+                              pos_m,
+                              widths=1,
+                              showmedians=True,
+                              vert=False)
+        # Explicitly set color
+        for pc in parts['bodies']:
+            pc.set_color(colors(g))
+            pc.set_alpha(0.7)
+
+    fig.tight_layout()
+    fig.savefig('../results/' + filename,
                 dpi=600)
 
 
