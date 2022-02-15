@@ -4,19 +4,20 @@ import figures
 import numpy as np
 from scipy.stats import linregress
 
-dat = load.load_complete_data()
-concen = np.log2(dat.iloc[:, 21:] + 0.01)
-groups = np.array(dat['research_subject'])
+farmers = load.load_data('farmers')
+concen = np.log2(farmers.iloc[:, 21:] + 0.01)
+groups = np.array(farmers['research_subject'])
 
 # Violin plot
-figures.concentration_violinplot(concen)
+figures.concentration_violinplot(concen.loc[groups == 'Farmer',:])
+figures.concentration_violinplot(concen.loc[groups == 'Farmer Control',:])
 
 # PCA
 pca_scores = stats.generate_PCA(concen)
 figures.plot_pca_scores(pca_scores,
                         groups=groups)
 figures.plot_pca_scores(pca_scores,
-                        continuous=dat['age'],
+                        continuous=farmers['age'],
                         filename='metabolites_pca_age')
 
 # Regression
