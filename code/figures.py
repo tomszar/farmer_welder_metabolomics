@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 
 
 def concentration_violinplot(D,
-                             transform=False):
+                             group_by:list=None,
+                             transform:bool=False):
     '''
     Plot a violinplot from metabolite concentration values.
 
@@ -12,31 +13,65 @@ def concentration_violinplot(D,
     ----------
     D: pd.DataFrame
         Dataframe with concentration values
+    group_by: list of str
+        List with group names to use
     transform: bool
         Whether to log2 transform the concentration values or not
     '''
     if transform:
         D = np.log2(D)
 
-    def set_axis_style(ax, labels):
+    def set_axis_style(ax, labels, n_groups=1):
         ax.yaxis.set_tick_params(direction='out',
                                  labelrotation=10,
                                  labelsize=10)
-        ax.set_yticks(np.arange(1, len(labels) + 1), labels=labels)
-        ax.set_ylim(0.25, len(labels) + 0.75)
+        if n_groups > 1:
+            ticks = np.arange(1, (len(labels) * (n_groups + 1)) + 1)
+            base_bool = list(np.repeat(True, n_groups))
+            base_bool.append(False)
+            select_bool = base_bool * len(labels)
+            pos = ticks[select_bool]
+            label_pos = []
+            for i in range(0, len(pos), 2):
+                lp = (pos[i] + pos[i+1]) / 2
+                label_pos.append(lp) 
+        else:
+            pos = np.arange(1, len(labels) + 1)
+            label_pos = pos
+            ax.set_ylim(0.25, len(labels) + 0.75)
+        
+        ax.set_yticks(label_pos, labels=labels)
         ax.set_ylabel('Metabolite name')
+        return(pos)
 
     # Violin plot
     fig, ax = plt.subplots(figsize=(8, 12))
     ax.set_title('Metabolite concentration values')
     ax.set_xlabel('Log2 concentration')
-    ax.violinplot(D,
-                  widths=1,
-                  vert=False)
     lab = list(D.columns)
-    set_axis_style(ax, lab)
-    plt.tight_layout()
-    plt.savefig('../results/metabolites_violinplot.pdf',
+    if group_by is not None:
+        n_groups = len(group_by.unique())
+        pos = set_axis_style(ax, lab, n_groups)
+    else:
+        n_groups = 1
+        pos = set_axis_style(ax, lab)
+    
+    for g in range(n_groups):
+        if group_by is not None:
+            sub = group_by.unique()[g]
+            subjects = group_by == sub
+            pos_m = pos[range(g, len(pos), 2)]
+        else:
+            subjects = np.repeat(True, len(concen))
+            pos_m = pos
+        
+        Dm = D.loc[subjects,:]
+        ax.violinplot(Dm, # Need to split the violinplot in the two groups
+                      pos_m,
+                      widths=1,
+                      vert=False)
+    fig.tight_layout()
+    fig.savefig('../results/metabolites_violinplot.pdf',
                 dpi=600)
 
 
