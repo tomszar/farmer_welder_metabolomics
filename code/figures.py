@@ -1,11 +1,11 @@
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 
 
 def concentration_violinplot(D,
-                             group_by:list=None,
-                             transform:bool=False):
+                             group_by: list = None,
+                             transform: bool = False,
+                             filename: str = 'metabolites_violinplot.pdf'):
     '''
     Plot a violinplot from metabolite concentration values.
 
@@ -17,6 +17,8 @@ def concentration_violinplot(D,
         List with group names to use
     transform: bool
         Whether to log2 transform the concentration values or not
+    filename: str
+        File name of the figure with extension
     '''
     if transform:
         D = np.log2(D)
@@ -33,13 +35,13 @@ def concentration_violinplot(D,
             pos = ticks[select_bool]
             label_pos = []
             for i in range(0, len(pos), 2):
-                lp = (pos[i] + pos[i+1]) / 2
-                label_pos.append(lp) 
+                lp = (pos[i] + pos[i + 1]) / 2
+                label_pos.append(lp)
         else:
             pos = np.arange(1, len(labels) + 1)
             label_pos = pos
             ax.set_ylim(0.25, len(labels) + 0.75)
-        
+
         ax.set_yticks(label_pos, labels=labels)
         ax.set_ylabel('Metabolite name')
         return(pos)
@@ -55,23 +57,23 @@ def concentration_violinplot(D,
     else:
         n_groups = 1
         pos = set_axis_style(ax, lab)
-    
+
     for g in range(n_groups):
         if group_by is not None:
             sub = group_by.unique()[g]
             subjects = group_by == sub
             pos_m = pos[range(g, len(pos), 2)]
         else:
-            subjects = np.repeat(True, len(concen))
+            subjects = np.repeat(True, len(D))
             pos_m = pos
-        
-        Dm = D.loc[subjects,:]
-        ax.violinplot(Dm, # Need to split the violinplot in the two groups
+
+        Dm = D.loc[subjects, :]
+        ax.violinplot(Dm,
                       pos_m,
                       widths=1,
                       vert=False)
     fig.tight_layout()
-    fig.savefig('../results/metabolites_violinplot.pdf',
+    fig.savefig('../results/' + filename,
                 dpi=600)
 
 
