@@ -4,9 +4,11 @@ import figures
 import numpy as np
 
 farmers = load.load_data('farmers')
-concen = np.log2(farmers.iloc[:, 21:] + 0.01)
+concen = np.log2(farmers.iloc[:, 26:] + 0.01)
 groups = farmers['research_subject']
 
+farmers.to_csv('../results/farmers.csv',
+               index=False)
 # Violin plot
 figures.concentration_violinplot(concen,
                                  groups,
