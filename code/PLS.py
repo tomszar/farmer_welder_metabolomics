@@ -1,4 +1,5 @@
 import load
+import stats
 import numpy as np
 import pandas as pd
 
@@ -9,6 +10,8 @@ farmers = load.load_data('farmers')
 exposures = farmers.iloc[:, 9:14]
 concen = np.log2(farmers.iloc[:, 26:] + 0.01)
 concen = scale(concen)
+
+scores = stats.PLSR(concen, exposures, standardize_X=False)
 
 encoder = OneHotEncoder(sparse=False)
 Y = pd.DataFrame(encoder.fit_transform(exposures))

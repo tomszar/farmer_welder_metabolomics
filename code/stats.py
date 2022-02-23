@@ -2,6 +2,7 @@
 import pandas as pd
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.decomposition import PCA
+from sklearn.model_selection import cross_val_score
 from sklearn.cross_decomposition import PLSRegression
 
 
@@ -32,7 +33,8 @@ def generate_PCA(D,
     return(pca_scores)
 
 
-def PLSR(X, Y,
+def PLSR(X, y,
+         p: int = 10,
          standardize_X: bool = True):
     '''
     Generate a Partial Leas Squares Regression
@@ -43,6 +45,8 @@ def PLSR(X, Y,
         Metabolite concentration matrix
     Y: pd.DataFrame
         Exposure matrix
+    p: int
+        p participants left out for the leave-p-out cross-validation
     standardize_X: bool
         Whether to standardize the X matrix or not
     '''
@@ -52,10 +56,16 @@ def PLSR(X, Y,
         X_scaled = X
 
     encoder = OneHotEncoder(sparse=False)
-    Y_encoded = pd.DataFrame(encoder.fit_transform(Y))
-    Y_encoded.columns = encoder.get_feature_names_out(Y.columns)
+    y_encoded = pd.DataFrame(encoder.fit_transform(y))
+    y_encoded.columns = encoder.get_feature_names_out(y.columns)
 
     PLSDA = PLSRegression(n_components=5,
                           scale=False)
-    x_scores, y_scores = PLSDA.fit_transform(X=X_scaled,
-                                             y=Y_encoded)
+    scores = -1 * cross_val_score(PLSDA,
+                                  X_scaled,
+                                  y_encoded,
+                                  cv=10,
+                                  scoring='neg_mean_squared_error').mean()
+    # x_scores, y_scores = PLSDA.fit_transform(X=X_scaled,
+    #                                          y=y_encoded)
+    return(scores)
