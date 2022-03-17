@@ -6,16 +6,29 @@ import numpy as np
 farmers = load.load_data('farmers')
 welders = load.load_data('welders',
                          baseline=True)
+replace_subects = {'Retired': 'Welder',
+                   'Active': 'Welder'}
+welders = welders.replace(replace_subects)
 
 covs = ['age', 'sex']
 predictors = ['research_subject']
-outcomes = list(welders.iloc[:, 21:].columns)
+outcomes = list(welders.iloc[:, 25:].columns)
 
 res = stats.EWAS(outcomes,
                  covs,
                  predictors,
                  welders)
-res.to_csv('../results/welder_res.csv')
+res.to_csv('../results/welder_res_binary.csv')
+
+predictors = ['lifetime_exposure']
+change_bool = welders['lifetime_exposure'] > 0
+welders.loc[change_bool, 'lifetime_exposure'] = np.log10(
+    welders.loc[change_bool, 'lifetime_exposure'])
+res = stats.EWAS(outcomes,
+                 covs,
+                 predictors,
+                 welders)
+res.to_csv('../results/welder_res_cont.csv')
 
 # Violin plots
 concen = np.log2(farmers.iloc[:, 26:] + 0.01)

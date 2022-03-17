@@ -63,7 +63,7 @@ def EWAS(outcomes: list[str],
                                             covariates=covariates,
                                             regression_variables=predictors,
                                             data=dat_clean,
-                                            min_n=100,
+                                            min_n=50,
                                             standardize_data=True)
 
     return(res)

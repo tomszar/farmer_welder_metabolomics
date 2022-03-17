@@ -176,7 +176,24 @@ def _load_welders(baseline=False,
         non_retired = ~(full_project['research_subject'] == 'Retired')
         full_project = full_project.loc[non_retired, :]
 
-    return(full_project)
+    # Read exposure metrics
+    rename_cols = {
+        'WorkDays8hrWelding_Mn (lifetime total hours)': 'lifetime_exposure'}
+    wh_exposures = pd.read_csv(
+        '../data/UNC WH Exposure.csv').rename(columns=rename_cols)
+    wh_exposures['project_id'] = 5467
+    merge_left = ['project_id', 'study_id']
+    merge_right = ['project_id', 'subject_id']
+    merged = pd.merge(full_project,
+                      wh_exposures,
+                      how='left',
+                      left_on=merge_left,
+                      right_on=merge_right)
+    # The participants without exposures in 5467 have zero exposure
+    bool_project = merged['project_id'] == 5467
+    merged[bool_project] = merged[bool_project].fillna(0)
+
+    return(merged)
 
 
 def get_exposures(type: str = 'farmers'):
