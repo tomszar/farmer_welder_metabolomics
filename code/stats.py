@@ -20,22 +20,23 @@ def generate_PCA(D,
 
     Returns
     ----------
-    pca_scores: pd.DataFrame
-        Data frame with PCA scores
+    pca: PCA
+        PCA object
     '''
     if standardize:
         D_scaled = StandardScaler().fit(D).transform(D)
     else:
         D_scaled = D
 
-    pca_scores = PCA(n_components=10).fit(D_scaled).transform(D_scaled)
-    return(pca_scores)
+    pca = PCA(n_components='mle').fit(D_scaled)
+    return(pca)
 
 
 def EWAS(outcomes: list[str],
          covariates: list[str],
          predictors: list[str],
-         data: pd.DataFrame):
+         data: pd.DataFrame,
+         remove_outliers: bool = False):
     '''
     Run an environment-wide association study
 
@@ -49,6 +50,8 @@ def EWAS(outcomes: list[str],
         List of column names for the predictors to use
     data: pd.DataFrame
         Data frame to use
+    remove_outliers: bool
+        Whether to remove outliers before the EWAS. Default False
     '''
     dat_clean = data.loc[:, covariates + predictors + outcomes]
     # Log2 and normalize
@@ -59,6 +62,9 @@ def EWAS(outcomes: list[str],
     var_unknown = var_types[var_types == 'unknown'].index
     dat_clean = clarite.modify.make_continuous(dat_clean,
                                                only=var_unknown)
+    if remove_outliers:
+        dat_clean.loc[:, outcomes] = clarite.modify.remove_outliers(
+            dat_clean.loc[:, outcomes])
     res = clarite.analyze.association_study(outcomes=outcomes,
                                             covariates=covariates,
                                             regression_variables=predictors,

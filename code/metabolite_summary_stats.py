@@ -17,7 +17,8 @@ outcomes = list(welders.iloc[:, 25:].columns)
 res = stats.EWAS(outcomes,
                  covs,
                  predictors,
-                 welders)
+                 welders,
+                 remove_outliers=True)
 res.to_csv('../results/welder_res_binary.csv')
 
 predictors = ['lifetime_exposure']
@@ -27,7 +28,8 @@ welders.loc[change_bool, 'lifetime_exposure'] = np.log10(
 res = stats.EWAS(outcomes,
                  covs,
                  predictors,
-                 welders)
+                 welders,
+                 remove_outliers=True)
 res.to_csv('../results/welder_res_cont.csv')
 
 # Violin plots
@@ -48,10 +50,7 @@ figures.concentration_violinplot(concen,
                                  filename='metabolites_welders_total.pdf')
 
 # PCA
-# pca_scores = stats.generate_PCA(concen)
-# figures.plot_pca_scores(pca_scores,
-#                         groups=groups)
-# figures.plot_pca_scores(pca_scores,
-#                         continuous=farmers['age'],
-#                         filename='metabolites_pca_age')
-#
+pca = stats.generate_PCA(concen)
+pca_scores = pca.transform(concen)
+figures.plot_pca_scores(pca_scores,
+                        groups=groups)

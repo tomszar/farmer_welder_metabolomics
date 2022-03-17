@@ -117,21 +117,41 @@ def plot_pca_scores(pca_scores,
     filename: str
         name of figure file
     '''
-    fig, ax = plt.subplots(figsize=(8, 8))
+    n_vars = pca_scores.shape[1]
+    n_plots = n_vars // 2
+    rows = 2
+    cols = int(np.ceil(n_plots / 2))
+    height = 6
+    width = height * (cols / rows)
+    fig = plt.figure(figsize=(width, height))
+    axes = []
+    for a in range(n_plots):
+        ax = fig.add_subplot(rows, cols, a + 1)
+        axes.append(ax)
+
     if groups is not None and continuous is not None:
         print('Cannot plot groups and continuous at the same time')
     elif groups is not None:
         for i in np.unique(groups):
             b = groups == i
-            ax.scatter(pca_scores[b, 0],
-                       pca_scores[b, 1])
+            comp = 0
+            for m in range(n_plots):
+                axes[m].scatter(pca_scores[b, comp],
+                                pca_scores[b, comp + 1])
+                comp = comp + 2
     elif continuous is not None:
-        ax.scatter(pca_scores[:, 0],
-                   pca_scores[:, 1],
-                   c=continuous)
+        comp = 0
+        for m in range(n_plots):
+            axes[m].scatter(pca_scores[:, comp],
+                            pca_scores[:, comp + 1],
+                            c=continuous)
+            comp = comp + 2
     else:
-        ax.scatter(pca_scores[:, 0],
-                   pca_scores[:, 1])
+        comp = 0
+        for m in range(n_plots):
+            axes[m].scatter(pca_scores[:, comp],
+                            pca_scores[:, comp + 1])
+            comp = comp + 2
 
     plt.tight_layout()
     plt.savefig('../results/' + filename + '.pdf',
