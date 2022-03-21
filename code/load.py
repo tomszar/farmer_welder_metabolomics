@@ -112,7 +112,10 @@ def _load_welders(baseline=False,
         Concatenated welders databases
     '''
     project_files = glob.glob('../data/Project_*welders.csv')
-    exposures = get_exposures('welders')
+    metal_names_5467 = get_metals()
+    metal_names_37016 = get_metals(37016)
+    replace_metals = dict(zip(metal_names_5467,
+                              metal_names_37016))
     covs = ['study_id',
             'redcap_event_name',
             'research_subject',
@@ -129,8 +132,21 @@ def _load_welders(baseline=False,
     for file in project_files:
         project_data = pd.read_csv(file,
                                    sep=';')
-        columns = covs + exposures
+        columns = covs + metal_names_37016
         if '5467' in file:
+            # Read metal levels 5467
+            use_cols = metal_names_5467 + ['Subject ID']
+            metal_5467 = pd.read_excel(
+                '../data/Whole blood results all metals.xlsx',
+                usecols=use_cols,
+                nrows=77).rename(replace_metals, axis=1)
+            project_data = pd.merge(project_data,
+                                    metal_5467,
+                                    left_on='subject_id',
+                                    right_on='Subject ID')
+            # Convert Fe ug/ml to ug/L
+            project_data.loc[:, 'fe'] = \
+                project_data.loc[:, 'fe'] * 1000
             # There are weird column names in this file
             replace_col_names = {'subject_id': 'study_id',
                                  'cohort': 'research_subject'}
@@ -166,8 +182,6 @@ def _load_welders(baseline=False,
     full_project = replace_values(full_project,
                                   'redcap_event_name',
                                   visit_replace)
-    # NA in exposures are 0
-    full_project[exposures] = full_project[exposures].fillna(0)
     if baseline:
         baseline = full_project['redcap_event_name'] == 1
         full_project = full_project.loc[baseline, :]
@@ -189,9 +203,13 @@ def _load_welders(baseline=False,
                       how='left',
                       left_on=merge_left,
                       right_on=merge_right)
+
     # The participants without exposures in 5467 have zero exposure
+    cols = ['elt (mg-years/m3)',
+            'pelt (mg-years/m3)',
+            'lifetime_exposure']
     bool_project = merged['project_id'] == 5467
-    merged[bool_project] = merged[bool_project].fillna(0)
+    merged.loc[bool_project, cols] = merged.loc[bool_project, cols].fillna(0)
 
     return(merged)
 
@@ -223,6 +241,53 @@ def get_exposures(type: str = 'farmers'):
         raise ValueError('type should be farmers or welders')
 
     return(exposures)
+
+
+def get_metabolites():
+    '''
+    Get list of metabolite names
+
+    Returns
+    ----------
+    metabolties: list of str
+        List of metabolite names
+    '''
+    metabolites = ['2-Oxoisocaproate', '3-Hydroxybutyrate',
+                   '3-Hydroxyisovalerate', '3-Methyl-2-oxovalerate',
+                   'Acetate', 'Acetone', 'Alanine', 'Citrate',
+                   'Creatine', 'Formate', 'Glucose', 'Glutamine',
+                   'Glycine', 'Histidine', 'Isoleucine', 'Lactate',
+                   'Leucine', 'Lysine', 'Mannose', 'Phenylalanine',
+                   'Pyruvate', 'Succinate', 'Threonine', 'Trimethylamine',
+                   'Tryptophan', 'Tyrosine', 'Valine']
+    return(metabolites)
+
+
+def get_metals(study: int = 5467):
+    '''
+    Get the column names for the metal level measures
+    that overlap across studies.
+
+    Parameters
+    ----------
+    study: int
+        Study, either 5467 or 37016
+    '''
+    if study == 5467:
+        metals = ['whole blood Zn (ug/L)',
+                  'whole blood Cu (ug/L)',
+                  'whole blood Pb (ug/L)',
+                  'whole blood Mn (ug/L)',
+                  'whole blood Fe (ug/mL)']
+    elif study == 37016:
+        metals = ['zn',
+                  'cu',
+                  'pb',
+                  'mn',
+                  'fe']
+    else:
+        raise ValueError('Enter a valid study ID: 5467 or 37016')
+    return(metals)
 
 
 def update_visit_info(data):

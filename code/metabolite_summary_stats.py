@@ -6,14 +6,39 @@ import numpy as np
 farmers = load.load_data('farmers')
 welders = load.load_data('welders',
                          baseline=True)
-replace_subects = {'Retired': 'Welder',
-                   'Active': 'Welder'}
-welders = welders.replace(replace_subects)
+covs = ['age', 'sex', 'project_id']
+outcomes = load.get_metabolites()
 
-covs = ['age', 'sex']
+# Summary figures
+# Violin plots
+concen = np.log2(farmers.loc[:, outcomes] + 0.01)
+groups = farmers['research_subject']
+figures.concentration_violinplot(concen,
+                                 groups,
+                                 filename='metabolites_farmers.pdf')
+
+concen = np.log2(welders.loc[:, outcomes] + 0.01)
+groups = welders['research_subject']
+figures.concentration_violinplot(concen,
+                                 groups,
+                                 filename='metabolites_welders.pdf')
+
+metals = load.get_metals(37016)
+metal_concentration = np.log2(welders[metals])
+figures.concentration_violinplot(metal_concentration,
+                                 groups,
+                                 filename='metals_welders.pdf')
+
+# PCA
+pca = stats.generate_PCA(concen)
+pca_scores = pca.transform(concen)
+figures.plot_pca_scores(pca_scores,
+                        groups=groups)
+
+replace_subjects = {'Retired': 'Welder',
+                    'Active': 'Welder'}
+welders = welders.replace(replace_subjects)
 predictors = ['research_subject']
-outcomes = list(welders.iloc[:, 25:].columns)
-
 res = stats.EWAS(outcomes,
                  covs,
                  predictors,
@@ -32,25 +57,10 @@ res = stats.EWAS(outcomes,
                  remove_outliers=True)
 res.to_csv('../results/welder_res_cont.csv')
 
-# Violin plots
-concen = np.log2(farmers.iloc[:, 26:] + 0.01)
-groups = farmers['research_subject']
-figures.concentration_violinplot(concen,
-                                 groups,
-                                 filename='metabolites_farmers_grouped.pdf')
-figures.concentration_violinplot(concen,
-                                 filename='metabolites_farmers_total.pdf')
-
-concen = np.log2(welders.loc[:, outcomes] + 0.01)
-groups = welders['research_subject']
-figures.concentration_violinplot(concen,
-                                 groups,
-                                 filename='metabolites_welders_grouped.pdf')
-figures.concentration_violinplot(concen,
-                                 filename='metabolites_welders_total.pdf')
-
-# PCA
-pca = stats.generate_PCA(concen)
-pca_scores = pca.transform(concen)
-figures.plot_pca_scores(pca_scores,
-                        groups=groups)
+predictors = ['pb']
+res = stats.EWAS(outcomes,
+                 covs,
+                 predictors,
+                 welders,
+                 remove_outliers=True)
+res.to_csv('../results/welder_res_pb.csv')

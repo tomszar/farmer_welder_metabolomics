@@ -25,10 +25,11 @@ With [Anaconda](https://www.anaconda.com/products/individual) or [Miniconda](htt
 conda env create -f environment.yml
 ```
 
-And then, activate the environment
+And then, activate the environment, and install clarite
 
 ```bash
 conda activate farmer_welder
+pip install clarite
 ```
 
 ## Data

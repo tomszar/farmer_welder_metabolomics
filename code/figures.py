@@ -84,7 +84,10 @@ def concentration_violinplot(D,
             pos_m = pos
 
         Dm = D.loc[subjects, :]
-        parts = ax.violinplot(Dm,
+        # Filter NA data using np.isnan
+        mask = ~np.isnan(np.array(Dm))
+        Dm_na = [d[m] for d, m in zip(np.array(Dm).T, mask.T)]
+        parts = ax.violinplot(Dm_na,
                               pos_m,
                               widths=1,
                               showmedians=True,
