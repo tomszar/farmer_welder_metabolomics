@@ -124,7 +124,8 @@ def _load_welders(baseline=False,
             'race',
             'ethnicity',
             'highest_education',
-            'years_of_education']
+            'years_of_education',
+            'currently_smoking']
     visit_replace = {'baseline_arm_1': 1,
                      '18_month_followup_arm_1': 2,
                      '1_year_followup_arm_1': 2}
@@ -185,10 +186,10 @@ def _load_welders(baseline=False,
     if baseline:
         baseline = full_project['redcap_event_name'] == 1
         full_project = full_project.loc[baseline, :]
+    else:
+        non_baseline = full_project['redcap_event_name'] == 2
+        full_project = full_project.loc[non_baseline, :]
 
-    if non_retired_only:
-        non_retired = ~(full_project['research_subject'] == 'Retired')
-        full_project = full_project.loc[non_retired, :]
 
     # Read exposure metrics
     rename_cols = {
@@ -203,6 +204,9 @@ def _load_welders(baseline=False,
                       how='left',
                       left_on=merge_left,
                       right_on=merge_right)
+
+    # NAs in smoking exposure are zero
+    merged['currently_smoking'] = merged['currently_smoking'].fillna(0)
 
     # The participants without exposures in 5467 have zero exposure
     cols = ['elt (mg-years/m3)',
