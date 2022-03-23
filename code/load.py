@@ -5,8 +5,7 @@ import numpy as np
 import pandas as pd
 
 
-def load_data(type: str = 'farmers',
-              **kwargs):
+def load_data(type: str = 'farmers'):
     '''
     Load complete data for either farmers or welders
 
@@ -24,7 +23,7 @@ def load_data(type: str = 'farmers',
     if type == 'farmers':
         full_project = _load_farmers()
     elif type == 'welders':
-        full_project = _load_welders(**kwargs)
+        full_project = _load_welders()
     else:
         raise ValueError('type should be farmers or welders')
 
@@ -33,16 +32,16 @@ def load_data(type: str = 'farmers',
     merge_right = ['Study ID', 'Subj ID']
     if type == 'welders':
         merge_left.append('redcap_event_name')
-        merge_right.append('Visit')
+        merge_right.append('redcap_event_name')
 
-    merged_data = pd.merge(full_project,
+    first_merge = pd.merge(metabolites,
                            ids,
-                           left_on=merge_left,
-                           right_on=merge_right)
-    final_data = pd.merge(merged_data,
-                          metabolites,
-                          left_on=['PSU IEE ID'],
-                          right_on=['PSU IEE'])
+                           on=['PSU IEE'])
+
+    final_data = pd.merge(full_project,
+                          first_merge,
+                          left_on=merge_left,
+                          right_on=merge_right)
     return(final_data)
 
 
@@ -92,8 +91,7 @@ def _load_farmers():
     return(full_project)
 
 
-def _load_welders(baseline=False,
-                  non_retired_only=False):
+def _load_welders():
     '''
     Load welders databases concatenated
 
@@ -126,25 +124,35 @@ def _load_welders(baseline=False,
             'highest_education',
             'years_of_education',
             'currently_smoking']
-    visit_replace = {'baseline_arm_1': 1,
-                     '18_month_followup_arm_1': 2,
-                     '1_year_followup_arm_1': 2}
     project_data_list = []
+    columns = covs + metal_names_37016
     for file in project_files:
         project_data = pd.read_csv(file,
                                    sep=';')
-        columns = covs + metal_names_37016
         if '5467' in file:
             # Read metal levels 5467
             use_cols = metal_names_5467 + ['Subject ID']
             metal_5467 = pd.read_excel(
                 '../data/Whole blood results all metals.xlsx',
                 usecols=use_cols,
-                nrows=77).rename(replace_metals, axis=1)
+                skiprows=[i for i in range(78, 81)]).rename(replace_metals,
+                                                            axis=1)
+            non_baselines = metal_5467['Subject ID'].str.contains('flu')
+            metal_5467['visit'] = 'baseline_arm_1'
+            metal_5467.loc[non_baselines, 'visit'] = '18_month_followup_arm_1'
+            metal_5467['Subject ID'] = metal_5467['Subject ID'].\
+                str.replace('-flu18', '')
+            metal_5467['Subject ID'] = metal_5467['Subject ID'].\
+                astype('int64')
+
+            # Merge metals
             project_data = pd.merge(project_data,
                                     metal_5467,
-                                    left_on='subject_id',
-                                    right_on='Subject ID')
+                                    how='left',
+                                    left_on=['subject_id',
+                                             'redcap_event_name'],
+                                    right_on=['Subject ID',
+                                              'visit'])
             # Convert Fe ug/ml to ug/L
             project_data.loc[:, 'fe'] = \
                 project_data.loc[:, 'fe'] * 1000
@@ -155,7 +163,7 @@ def _load_welders(baseline=False,
             age = get_age(project_data['blood_work_date'],
                           project_data['date_of_birth'])
             project_data['age'] = age
-            # Keep certain rows
+            # Delete extra medication rows
             keep = ~ (project_data['redcap_repeat_instance'] >= 1)
             project_data = project_data[keep]
             remove_from_list = ['race',
@@ -167,6 +175,19 @@ def _load_welders(baseline=False,
                                3: 'Control'}
             project_data.rename(columns=replace_col_names,
                                 inplace=True)
+            # Copy research subject info to non-baselines
+            project_data = project_data.set_index('study_id')
+            cohort = project_data.groupby('study_id')['research_subject'].max()
+            project_data = pd.merge(cohort,
+                                    project_data,
+                                    left_index=True,
+                                    right_index=True)
+            project_data = project_data.drop('research_subject_y',
+                                             axis=1)
+            project_data.rename(columns={'research_subject_x':
+                                         'research_subject'},
+                                inplace=True)
+            project_data.reset_index(inplace=True)
         elif '37016' in file:
             # Change type of research subject
             subject_replace = {1: 'Active',
@@ -180,16 +201,6 @@ def _load_welders(baseline=False,
         project_data_list.append(project_data)
 
     full_project = pd.concat(project_data_list).reset_index(drop=True)
-    full_project = replace_values(full_project,
-                                  'redcap_event_name',
-                                  visit_replace)
-    if baseline:
-        baseline = full_project['redcap_event_name'] == 1
-        full_project = full_project.loc[baseline, :]
-    else:
-        non_baseline = full_project['redcap_event_name'] == 2
-        full_project = full_project.loc[non_baseline, :]
-
 
     # Read exposure metrics
     rename_cols = {
