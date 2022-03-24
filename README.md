@@ -25,34 +25,24 @@ With [Anaconda](https://www.anaconda.com/products/individual) or [Miniconda](htt
 conda env create -f environment.yml
 ```
 
-And then, activate the environment
+And then, activate the environment, and install the farmer_welder package
 
 ```bash
 conda activate farmer_welder
+pip install .
 ```
 
-## Data
+## Steps to reproduce the analysis
 
-Create the `data` folder:
+First, create the data and results layout by running:
 
 ```bash
-mkdir data
+create_folders
 ```
 
-And copy all the files located in the Penn State Roar's path `mah546/default/datasets/welder_farmer_study/`
-
-## Results
-
-Results will be exported to the `results` folder, so you'll need to create it first:
+And copy all the files located in the Penn State Roar's path `mah546/default/datasets/welder_farmer_study/` to the `data/raw` folder.
+Then, create the merged data files used for most analysis, by typing:
 
 ```bash
-mkdir results
-```
-
-## Run analysis
-
-To run the analysis, in the terminal type (make sure you've activated the conda environment):
-
-```bash
-bash run_local.sh
+merge_data
 ```
