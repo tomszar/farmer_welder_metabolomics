@@ -126,7 +126,8 @@ def _load_welders():
             'ethnicity',
             'highest_education',
             'years_of_education',
-            'currently_smoking']
+            'currently_smoking',
+            'elt']
     project_data_list = []
     columns = covs + metal_names_37016
     for file in project_files:
@@ -176,25 +177,30 @@ def _load_welders():
             subject_replace = {1: 'Active',
                                2: 'Retired',
                                3: 'Control'}
-            project_data.rename(columns=replace_col_names,
-                                inplace=True)
+            project_data = project_data.rename(columns=replace_col_names)
             # Copy research subject info to non-baselines
-            project_data = project_data.set_index('study_id')
-            cohort = project_data.groupby('study_id')['research_subject'].max()
-            project_data = pd.merge(cohort,
-                                    project_data,
-                                    left_index=True,
-                                    right_index=True)
-            project_data = project_data.drop('research_subject_y',
-                                             axis=1)
-            project_data.rename(columns={'research_subject_x':
-                                         'research_subject'},
-                                inplace=True)
-            project_data.reset_index(inplace=True)
+            project_data = copy_from_baseline(project_data,
+                                              'research_subject')
+            # Read seq exposure data
+            wh_exposure = pd.read_csv(
+                'data/raw/UNC WH Exposure.csv').\
+                rename(columns={'elt (mg-years/m3)':
+                                'elt'})
+            project_data = pd.merge(project_data,
+                                    wh_exposure,
+                                    how='left',
+                                    left_on='study_id',
+                                    right_on='subject_id')
+            # Participants with NA in elt have zero
+            project_data.loc[:, 'elt'] = project_data.loc[:, 'elt'].fillna(0)
         elif '37016' in file:
             # Change type of research subject
             subject_replace = {1: 'Active',
                                2: 'Control'}
+            # Copy elt data from baseline to non-baseline
+            project_data = copy_from_baseline(project_data,
+                                              'elt')
+
         project_data = replace_values(project_data,
                                       'research_subject',
                                       subject_replace)
@@ -205,31 +211,44 @@ def _load_welders():
 
     full_project = pd.concat(project_data_list).reset_index(drop=True)
 
-    # Read exposure metrics
-    rename_cols = {
-        'WorkDays8hrWelding_Mn (lifetime total hours)': 'lifetime_exposure'}
-    wh_exposures = pd.read_csv(
-        'data/raw/UNC WH Exposure.csv').rename(columns=rename_cols)
-    wh_exposures['project_id'] = 5467
-    merge_left = ['project_id', 'study_id']
-    merge_right = ['project_id', 'subject_id']
-    merged = pd.merge(full_project,
-                      wh_exposures,
-                      how='left',
-                      left_on=merge_left,
-                      right_on=merge_right)
-
     # NAs in smoking exposure are zero
-    merged['currently_smoking'] = merged['currently_smoking'].fillna(0)
+    full_project['currently_smoking'] = full_project['currently_smoking'].\
+        fillna(0)
 
-    # The participants without exposures in 5467 have zero exposure
-    cols = ['elt (mg-years/m3)',
-            'pelt (mg-years/m3)',
-            'lifetime_exposure']
-    bool_project = merged['project_id'] == 5467
-    merged.loc[bool_project, cols] = merged.loc[bool_project, cols].fillna(0)
+    return(full_project)
 
-    return(merged)
+
+def load_baseline_data(type: str = 'farmers'):
+    '''
+    Get the baseline data from welders or farmers
+
+    Parameters
+    ----------
+    type: str
+        The type of data, either farmers or welders
+
+    Returns
+    ----------
+    baseline_data: pd.DataFrame
+        Baseline dataframe
+    '''
+    if type == 'farmers':
+        farmers = pd.read_csv('data/processed/farmers.csv')
+        baseline_data = farmers.drop_duplicates(subset='Internal Code',
+                                                keep='first')
+    elif type == 'welders':
+        welders = pd.read_csv('data/processed/welders.csv')
+        non_duplicated = ~welders['Internal Code'].duplicated(keep=False)
+        welders_nd = welders.loc[non_duplicated, :]
+        welders_d = welders.loc[~non_duplicated, :]
+        welders_d = welders_d.sort_values(by=['Internal Code', 'Visit'])
+        welders_first = welders_d.drop_duplicates(subset='Internal Code',
+                                                  keep='first')
+        baseline_data = pd.concat([welders_nd, welders_first])
+    else:
+        raise ValueError('type should be farmers or welders')
+
+    return(baseline_data)
 
 
 def get_exposures(type: str = 'farmers'):
@@ -370,3 +389,32 @@ def get_age(collection_date,
     days = doc - dob
     age = np.floor(days / np.timedelta64(1, 'Y'))
     return(age)
+
+
+def copy_from_baseline(dat,
+                       colname: str):
+    '''
+    Copy the baseline information in colname to the other rows
+
+    Parameters
+    ----------
+    data: pd.DataFrame
+        Data in which to copy
+    colname: str
+        Column name
+    '''
+    data = dat.copy()
+    data = data.set_index('study_id')
+    col = data.groupby('study_id')[colname].max()
+    data = pd.merge(col,
+                    data,
+                    left_index=True,
+                    right_index=True)
+    col_to_drop = colname + '_y'
+    col_to_change = colname + '_x'
+    data = data.drop(col_to_drop,
+                     axis=1)
+    data = data.rename(columns={col_to_change:
+                                colname})
+    data = data.reset_index()
+    return(data)
