@@ -12,6 +12,7 @@ setup(
         'console_scripts': [
             'create_folders=farmer_welder.create_folders:main',
             'merge_data=farmer_welder.merge_data:main',
+            'baseline_analysis=farmer_welder.baseline_analysis:main',
             'run_summary=farmer_welder.metabolite_summary_stats:main',
         ]
     }

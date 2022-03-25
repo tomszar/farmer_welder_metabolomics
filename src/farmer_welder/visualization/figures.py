@@ -98,7 +98,7 @@ def concentration_violinplot(D,
             pc.set_alpha(0.7)
 
     fig.tight_layout()
-    fig.savefig('../results/' + filename,
+    fig.savefig('results/figures/' + filename,
                 dpi=600)
 
 
@@ -157,5 +157,5 @@ def plot_pca_scores(pca_scores,
             comp = comp + 2
 
     plt.tight_layout()
-    plt.savefig('../results/' + filename + '.pdf',
+    plt.savefig('results/figures/' + filename + '.pdf',
                 dpi=600)

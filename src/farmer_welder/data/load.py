@@ -16,14 +16,17 @@ def load_data(type: str = 'farmers'):
     '''
 
     # READ DATA #
-    ids = pd.read_csv('../data/project_IDs.csv')
+    ids = pd.read_csv('data/raw/project_IDs.csv')
     ids = update_visit_info(ids)
-    metabolites = pd.read_csv('../data/metabolite_concentration.csv')
+    metabolites = pd.read_csv('data/raw/metabolite_concentration.csv')
 
     if type == 'farmers':
         full_project = _load_farmers()
     elif type == 'welders':
         full_project = _load_welders()
+        # Welder 36 is control
+        id36 = full_project['study_id'] == 36
+        full_project.loc[id36, 'research_subject'] = 'Control'
     else:
         raise ValueError('type should be farmers or welders')
 
@@ -54,7 +57,7 @@ def _load_farmers():
     full_project: pd.DataFrame
         Concatenated farmer databases
     '''
-    project_files = glob.glob('../data/Project_*farmers.csv')
+    project_files = glob.glob('data/raw/Project_*farmers.csv')
     exposures = get_exposures('farmers')
     covs = ['study_id',
             'research_subject',
@@ -109,7 +112,7 @@ def _load_welders():
     full_project: pd.DataFrame
         Concatenated welders databases
     '''
-    project_files = glob.glob('../data/Project_*welders.csv')
+    project_files = glob.glob('data/raw/Project_*welders.csv')
     metal_names_5467 = get_metals()
     metal_names_37016 = get_metals(37016)
     replace_metals = dict(zip(metal_names_5467,
@@ -133,7 +136,7 @@ def _load_welders():
             # Read metal levels 5467
             use_cols = metal_names_5467 + ['Subject ID']
             metal_5467 = pd.read_excel(
-                '../data/Whole blood results all metals.xlsx',
+                'data/raw/Whole blood results all metals.xlsx',
                 usecols=use_cols,
                 skiprows=[i for i in range(78, 81)]).rename(replace_metals,
                                                             axis=1)
@@ -206,7 +209,7 @@ def _load_welders():
     rename_cols = {
         'WorkDays8hrWelding_Mn (lifetime total hours)': 'lifetime_exposure'}
     wh_exposures = pd.read_csv(
-        '../data/UNC WH Exposure.csv').rename(columns=rename_cols)
+        'data/raw/UNC WH Exposure.csv').rename(columns=rename_cols)
     wh_exposures['project_id'] = 5467
     merge_left = ['project_id', 'study_id']
     merge_right = ['project_id', 'subject_id']
