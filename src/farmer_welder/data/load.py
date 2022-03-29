@@ -127,7 +127,9 @@ def _load_welders():
             'highest_education',
             'years_of_education',
             'currently_smoking',
-            'elt']
+            'elt',
+            'e90',
+            'hrsw']
     project_data_list = []
     columns = covs + metal_names_37016
     for file in project_files:
@@ -136,11 +138,12 @@ def _load_welders():
         if '5467' in file:
             # Read metal levels 5467
             use_cols = metal_names_5467 + ['Subject ID']
-            metal_5467 = pd.read_excel(
-                'data/raw/Whole blood results all metals.xlsx',
-                usecols=use_cols,
-                skiprows=[i for i in range(78, 81)]).rename(replace_metals,
-                                                            axis=1)
+            metal_file = 'data/raw/Whole blood results all metals.xlsx'
+            metal_5467 = pd.read_excel(metal_file,
+                                       usecols=use_cols,
+                                       skiprows=[i for i in range(78, 81)]).\
+                rename(replace_metals,
+                       axis=1)
             non_baselines = metal_5467['Subject ID'].str.contains('flu')
             metal_5467['visit'] = 'baseline_arm_1'
             metal_5467.loc[non_baselines, 'visit'] = '18_month_followup_arm_1'
@@ -181,18 +184,37 @@ def _load_welders():
             # Copy research subject info to non-baselines
             project_data = copy_from_baseline(project_data,
                                               'research_subject')
-            # Read seq exposure data
+            # Read wh exposure data
             wh_exposure = pd.read_csv(
                 'data/raw/UNC WH Exposure.csv').\
-                rename(columns={'elt (mg-years/m3)':
-                                'elt'})
+                rename(columns={'elt (mg-years/m3)': 'elt'})
             project_data = pd.merge(project_data,
                                     wh_exposure,
                                     how='left',
                                     left_on='study_id',
                                     right_on='subject_id')
+
+            # Read seq exposure data
+            seq_exposure = pd.read_csv(
+                'data/raw/UNC SEQ Exposure.csv').\
+                rename(columns={'e90 (mg/m3 hours)': 'e90',
+                                'hrsw (hours)': 'hrsw'}).\
+                replace({'Baseline': 'baseline_arm_1',
+                         '18 Month Follow-Up': '18_month_followup_arm_1'})
+            project_data = pd.merge(project_data,
+                                    seq_exposure,
+                                    how='left',
+                                    left_on=['study_id',
+                                             'redcap_event_name'],
+                                    right_on=['subject_id',
+                                              'redcap_event_name'])
             # Participants with NA in elt have zero
             project_data.loc[:, 'elt'] = project_data.loc[:, 'elt'].fillna(0)
+            # Control participants in e90 and hrsw have zero
+            controls_bool = project_data.\
+                loc[:, 'research_subject'] == 3
+            project_data.loc[controls_bool, 'e90'] = 0
+            project_data.loc[controls_bool, 'hrsw'] = 0
         elif '37016' in file:
             # Change type of research subject
             subject_replace = {1: 'Active',
@@ -248,7 +270,7 @@ def load_baseline_data(type: str = 'farmers'):
     else:
         raise ValueError('type should be farmers or welders')
 
-    return(baseline_data)
+    return pd.DataFrame(baseline_data)
 
 
 def get_exposures(type: str = 'farmers'):
@@ -370,8 +392,8 @@ def replace_values(data: pd.DataFrame,
     return(data)
 
 
-def get_age(collection_date,
-            DOB):
+def get_age(collection_date: pd.DataFrame,
+            DOB: pd.DataFrame):
     '''
     Get the age from the date of collection and DOB
 
@@ -391,7 +413,7 @@ def get_age(collection_date,
     return(age)
 
 
-def copy_from_baseline(dat,
+def copy_from_baseline(dat: pd.DataFrame,
                        colname: str):
     '''
     Copy the baseline information in colname to the other rows

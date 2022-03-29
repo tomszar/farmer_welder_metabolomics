@@ -133,3 +133,6 @@ data/*
 
 # Results
 results/*
+
+# lsp-pyright config
+pyrightconfig.json

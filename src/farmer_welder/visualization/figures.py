@@ -1,14 +1,17 @@
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 
+from typing import Union
 from matplotlib import cm
 
 
-def concentration_violinplot(D,
-                             group_by: list = None,
+def concentration_violinplot(D: pd.DataFrame,
+                             group_by: Union[pd.Series, None],
                              transform: bool = False,
-                             filename: str = 'metabolites_violinplot.pdf'):
+                             filename: str = 'metabolites_violinplot.pdf',
+                             **kwargs):
     '''
     Plot a violinplot from metabolite concentration values.
 
@@ -16,12 +19,13 @@ def concentration_violinplot(D,
     ----------
     D: pd.DataFrame
         Dataframe with concentration values
-    group_by: list of str
-        List with group names to use
+    group_by: pd.Series or None
+        Series with the group information
     transform: bool
         Whether to log2 transform the concentration values or not
     filename: str
         File name of the figure with extension
+    kwargs: Keyword arguments specific to the axes function
     '''
     if transform:
         D = np.log2(D)
@@ -47,14 +51,14 @@ def concentration_violinplot(D,
             ax.set_ylim(0.25, len(labels) + 0.75)
 
         ax.set_yticks(label_pos, labels=labels)
-        ax.set_ylabel('Metabolite name')
         return(pos)
 
     # Violin plot
     colors = cm.get_cmap('Set2')
-    fig, ax = plt.subplots(figsize=(8, 12))
-    ax.set_title('Metabolite concentration values')
-    ax.set_xlabel('Log2 concentration')
+    fig = plt.figure(figsize=(8, 12),
+                     dpi=300)
+    ax = fig.add_subplot(111,
+                         **kwargs)
     lab = list(D.columns)
     if group_by is not None:
         patches = []
