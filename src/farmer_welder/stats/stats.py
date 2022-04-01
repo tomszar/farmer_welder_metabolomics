@@ -1,6 +1,9 @@
 import clarite
 import numpy as np
 import pandas as pd
+import scipy.cluster.hierarchy as sch
+
+from typing import Union
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
@@ -56,7 +59,7 @@ def EWAS(outcomes: list[str],
     dat_clean = data.loc[:, covariates + predictors + outcomes]
     # Log2 and normalize
     dat_clean.loc[:, outcomes] = np.log2(
-        dat_clean.loc[:, outcomes] + 0.01)
+        dat_clean.loc[:, outcomes] + 1/100000000)
     dat_clean = clarite.modify.categorize(dat_clean)
     var_types = clarite.describe.get_types(dat_clean)
     var_unknown = var_types[var_types == 'unknown'].index
@@ -73,3 +76,63 @@ def EWAS(outcomes: list[str],
                                             standardize_data=True)
 
     return(res)
+
+
+def transform_data(data: Union[pd.DataFrame, pd.Series],
+                   log2_transform: bool = True,
+                   zscore_transform: bool = True):
+    '''
+    Zscore normalize dataframe
+
+    Parameters
+    ----------
+    data: pd.DataFrame or pd.Series
+        Data to normalize
+
+    Returns
+    ----------
+    transformed_data: pd.DataFrame
+        Transformed data
+    '''
+    transformed_data = data.copy()
+    if log2_transform:
+        transformed_data = np.log2(transformed_data)
+
+    if zscore_transform:
+        if isinstance(transformed_data, pd.DataFrame):
+            for col in transformed_data.columns:
+                transformed_data[col] = (transformed_data[col] -
+                                         transformed_data[col].mean()) \
+                    / transformed_data[col].std()
+        elif isinstance(transformed_data, pd.Series):
+            transformed_data = (transformed_data -
+                                transformed_data.mean()) \
+                / transformed_data.std()
+
+    return transformed_data
+
+
+def cluster_corr(corr_array):
+    '''
+    Rearranges the correlation matrix, corr_array, so that groups of highly
+    correlated variables are next to each other.
+
+    Parameters
+    ----------
+    corr_array: pd.DataFrame or np.ndarray
+        a NxN correlation matrix
+
+    Returns
+    ----------
+    idx: index
+        a N index to rearrange columns and rows
+    '''
+    pairwise_distances = sch.distance.pdist(corr_array)
+    linkage = sch.linkage(pairwise_distances,
+                          method='complete')
+    cluster_distance_threshold = pairwise_distances.max()/2
+    idx_to_cluster_array = sch.fcluster(linkage,
+                                        cluster_distance_threshold,
+                                        criterion='distance')
+    idx = np.argsort(idx_to_cluster_array)
+    return idx

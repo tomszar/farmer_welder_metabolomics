@@ -5,9 +5,10 @@ import matplotlib.lines as mlines
 
 from typing import Union
 from matplotlib import cm
+from ..stats import stats
 
 
-def concentration_violinplot(D: pd.DataFrame,
+def concentration_violinplot(D: Union[pd.DataFrame, pd.Series],
                              group_by: Union[pd.Series, None],
                              transform: bool = False,
                              filename: str = 'metabolites_violinplot.pdf',
@@ -17,7 +18,7 @@ def concentration_violinplot(D: pd.DataFrame,
 
     Parameters
     ----------
-    D: pd.DataFrame
+    D: pd.DataFrame or pd.Series
         Dataframe with concentration values
     group_by: pd.Series or None
         Series with the group information
@@ -59,7 +60,12 @@ def concentration_violinplot(D: pd.DataFrame,
                      dpi=300)
     ax = fig.add_subplot(111,
                          **kwargs)
-    lab = list(D.columns)
+    lab = []
+    if isinstance(D, pd.DataFrame):
+        lab = list(D.columns)
+    elif isinstance(D, pd.Series):
+        lab = list(D.name)
+
     if group_by is not None:
         patches = []
         n_groups = len(group_by.unique())
@@ -162,4 +168,55 @@ def plot_pca_scores(pca_scores,
 
     plt.tight_layout()
     plt.savefig('results/figures/' + filename + '.pdf',
+                dpi=600)
+
+
+def correlation_plot(data: pd.DataFrame,
+                     filename: str = 'correlation_plot.pdf'):
+    '''
+    Generation a correlation plot over all columns of data
+
+    Parameters
+    ----------
+    data: pd.DataFrame
+        Data from which to generate the correlation plot
+    filename: str
+        Name of the plot file
+    '''
+    # Generate correlation and labels
+    correlations = np.array(data.corr())
+    np.fill_diagonal(correlations,
+                     0, wrap=False)
+    labels = data.columns
+    # Sort the matrix to look better
+    idx = stats.cluster_corr(correlations)
+    correlations = correlations[idx, :][:, idx]
+    labels = labels[idx]
+    # Generate the figure
+    fig, ax = plt.subplots(figsize=(10, 8))
+    im = ax.imshow(correlations,
+                   cmap='PiYG',
+                   vmin=-1,
+                   vmax=1)
+    # Create colorbar
+    cbar = ax.figure.colorbar(im, ax=ax,)
+    cbar.ax.set_ylabel('Correlation coefficient',
+                       rotation=-90,
+                       va='bottom')
+    # Turn spines off and create white grid
+    ax.spines[:].set_visible(False)
+    ax.set_xticks(np.arange(correlations.shape[1]+1)-.5, minor=True)
+    ax.set_yticks(np.arange(correlations.shape[0]+1)-.5, minor=True)
+    ax.grid(which='minor', color='w', linestyle='-', linewidth=3)
+    ax.tick_params(which='minor', bottom=False, left=False)
+    # Set tick labels and rotations
+    ax.set_xticks(np.arange(len(correlations)),
+                  labels=labels,
+                  rotation=45,
+                  ha='right')
+    ax.set_yticks(np.arange(len(correlations)),
+                  labels=labels)
+    # Save figure
+    fig.tight_layout()
+    fig.savefig('results/figures/' + filename,
                 dpi=600)

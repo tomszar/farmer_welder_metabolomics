@@ -117,6 +117,9 @@ def _load_welders():
     metal_names_37016 = get_metals(37016)
     replace_metals = dict(zip(metal_names_5467,
                               metal_names_37016))
+    # Change type of research subject
+    subject_replace = {1: 'Active',
+                       2: 'Control'}
     covs = ['study_id',
             'redcap_event_name',
             'research_subject',
@@ -177,9 +180,8 @@ def _load_welders():
                                 'years_of_education']
             columns = [i for i in columns if i not in remove_from_list]
             # Change type of research subject
-            subject_replace = {1: 'Active',
-                               2: 'Retired',
-                               3: 'Control'}
+            subject_replace.update({2: 'Retired',
+                                    3: 'Control'})
             project_data = project_data.rename(columns=replace_col_names)
             # Copy research subject info to non-baselines
             project_data = copy_from_baseline(project_data,
@@ -216,9 +218,6 @@ def _load_welders():
             project_data.loc[controls_bool, 'e90'] = 0
             project_data.loc[controls_bool, 'hrsw'] = 0
         elif '37016' in file:
-            # Change type of research subject
-            subject_replace = {1: 'Active',
-                               2: 'Control'}
             # Copy elt data from baseline to non-baseline
             project_data = copy_from_baseline(project_data,
                                               'elt')

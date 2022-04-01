@@ -46,3 +46,15 @@ Then, create the merged data files used for most analysis, by typing:
 ```bash
 merge_data
 ```
+
+To generate some descriptive plots, run:
+
+```bash
+baseline_plots
+```
+
+Finally, to run the analysis, run:
+
+```bash
+baseline_analysis welders
+```
