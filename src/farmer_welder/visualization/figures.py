@@ -11,7 +11,7 @@ from ..stats import stats
 def concentration_violinplot(D: Union[pd.DataFrame, pd.Series],
                              group_by: Union[pd.Series, None],
                              transform: bool = False,
-                             filename: str = 'metabolites_violinplot.pdf',
+                             filename: str = 'metabolites_violinplot.png',
                              **kwargs):
     '''
     Plot a violinplot from metabolite concentration values.
@@ -172,7 +172,7 @@ def plot_pca_scores(pca_scores,
 
 
 def correlation_plot(data: pd.DataFrame,
-                     filename: str = 'correlation_plot.pdf'):
+                     filename: str = 'correlation_plot.png'):
     '''
     Generation a correlation plot over all columns of data
 

@@ -15,10 +15,10 @@ def main():
     # Create correlation and violinplots plots by cohort
     for study, dat in bs.groupby('Study ID'):
         figures.correlation_plot(dat[metabolites + metals + exposures],
-                                 full_corr_name + '_' + str(study) + '.pdf')
+                                 full_corr_name + '_' + str(study) + '.png')
         for i, cols in enumerate([metabolites, metals, exposures]):
             figures.correlation_plot(dat[cols],
-                                     filenames[i] + '_' + str(study) + '.pdf')
+                                     filenames[i] + '_' + str(study) + '.png')
             groups = dat['research_subject']
             names = ['metabolites', 'metals']
             titles = ['Metabolite concentrations',
@@ -29,7 +29,7 @@ def main():
                 else:
                     data_violin = dat[cols]
                 data_violin = stats.transform_data(data_violin)
-                filename = names[i] + '_welders_bs_' + str(study) + '.pdf'
+                filename = names[i] + '_welders_bs_' + str(study) + '.png'
                 figures.concentration_violinplot(data_violin,
                                                  groups,
                                                  filename=filename,
@@ -43,7 +43,7 @@ def main():
                     data_violin = dat[[expo]]
                     data_violin = stats.transform_data(data_violin,
                                                        log2_transform=False)
-                    filename = expo + '_welders_bs_' + str(study) + '.pdf'
+                    filename = expo + '_welders_bs_' + str(study) + '.png'
                     figures.concentration_violinplot(data_violin,
                                                      groups,
                                                      filename=filename,
