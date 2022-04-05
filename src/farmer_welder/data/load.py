@@ -72,10 +72,10 @@ def _load_farmers():
                        2: 'Farmer Control',
                        4: 'Farmer Control'}
     project_data_list = []
+    columns = covs + exposures
     for file in project_files:
         project_data = pd.read_csv(file,
                                    sep=';')
-        columns = covs + exposures
         if '42368' in file:
             replace_col_names = {'study_id_number': 'study_id'}
             project_data.rename(columns=replace_col_names,
@@ -113,6 +113,7 @@ def _load_welders():
         Concatenated welders databases
     '''
     project_files = glob.glob('data/raw/Project_*welders.csv')
+    exposures = get_exposures('welders')
     metal_names_5467 = get_metals()
     metal_names_37016 = get_metals(37016)
     replace_metals = dict(zip(metal_names_5467,
@@ -129,12 +130,9 @@ def _load_welders():
             'ethnicity',
             'highest_education',
             'years_of_education',
-            'currently_smoking',
-            'elt',
-            'e90',
-            'hrsw']
+            'currently_smoking']
     project_data_list = []
-    columns = covs + metal_names_37016
+    columns = covs + metal_names_37016 + exposures
     for file in project_files:
         project_data = pd.read_csv(file,
                                    sep=';')
@@ -294,7 +292,9 @@ def get_exposures(type: str = 'farmers'):
                      'percent_application',
                      'protective_equipment_new']
     elif type == 'welders':
-        exposures = []
+        exposures = ['elt',
+                     'e90',
+                     'hrsw']
     else:
         raise ValueError('type should be farmers or welders')
 
