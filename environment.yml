@@ -1,9 +1,6 @@
 name: farmer_welder
 channels:
   - conda-forge
-  - bioconda
-  - r
-  - defaults
 dependencies:
   - python<=3.9
   - numpy
