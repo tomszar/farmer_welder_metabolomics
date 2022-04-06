@@ -3,12 +3,13 @@ import numpy as np
 
 def euclidean_distance(mat: np.ndarray):
     '''
-    Generate a distance matrix will all pairwise combination from mat
+    Calculate the euclidean distances between
+    all pairwise combinations from mat
 
     Parameters
     ----------
     mat: np.array
-        Matrix to estimate all pairwise distances, with N rows
+        Matrix to estimate all pairwise distances, with N rows, and P columns
 
     Returns
     ----------

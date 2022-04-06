@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.stats import norm
 
 
 def affinity_matrix(dist: np.ndarray,
@@ -23,9 +24,9 @@ def affinity_matrix(dist: np.ndarray,
     dist_mat = (dist + dist.transpose()) / 2
     np.fill_diagonal(dist_mat, 0)
     dist_mat_sort = np.sort(dist_mat, axis=0)
-    means = np.mean(dist_mat_sort[:k], axis=0) + mach_eps
-    sig = (means + means.transpose()) / 3 * 2 + dist_mat / 3 + mach_eps
+    means = np.mean(dist_mat_sort[1:k+1], axis=0) + mach_eps
+    sig = (np.add.outer(means, means) / 2) / 3 * 2 + dist_mat / 3 + mach_eps
     sig[sig <= mach_eps] = mach_eps
-    densities = np.exp(-(dist_mat / (sigma * sig)))
+    densities = norm.pdf(dist_mat, loc=0, scale=(sigma * sig))
     W = (densities + densities.transpose()) / 2
     return W
