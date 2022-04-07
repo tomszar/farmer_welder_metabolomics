@@ -171,7 +171,9 @@ def plot_pca_scores(pca_scores,
                 dpi=600)
 
 
-def correlation_plot(data: pd.DataFrame,
+def correlation_plot(data: Union[pd.DataFrame, np.ndarray],
+                     labels: Union[list[str], None] = None,
+                     estimate_corr: bool = True,
                      filename: str = 'correlation_plot.png'):
     '''
     Generation a correlation plot over all columns of data
@@ -180,24 +182,38 @@ def correlation_plot(data: pd.DataFrame,
     ----------
     data: pd.DataFrame
         Data from which to generate the correlation plot
+    estimate_corr: bool
+        Whether to estimate the correlation or not. If False,
+        it's assumed that the data is a correlation or distance matrix
     filename: str
         Name of the plot file
     '''
-    # Generate correlation and labels
-    correlations = np.array(data.corr())
-    np.fill_diagonal(correlations,
-                     0, wrap=False)
-    labels = data.columns
+    if estimate_corr:
+        # Generate correlation and labels
+        correlations = np.array(pd.DataFrame(data).corr())
+        np.fill_diagonal(correlations,
+                         0, wrap=False)
+    else:
+        correlations = np.array(data)
+        np.fill_diagonal(correlations,
+                         0, wrap=False)
+
     # Sort the matrix to look better
     idx = stats.cluster_corr(correlations)
     correlations = correlations[idx, :][:, idx]
-    labels = labels[idx]
+
     # Generate the figure
     fig, ax = plt.subplots(figsize=(10, 8))
+    vmin = correlations.min()
+    vmax = correlations.max()
+    if vmin < 0:
+        cmap = 'PiYG'
+    else:
+        cmap = 'Reds'
     im = ax.imshow(correlations,
-                   cmap='PiYG',
-                   vmin=-1,
-                   vmax=1)
+                   cmap=cmap,
+                   vmin=vmin,
+                   vmax=vmax)
     # Create colorbar
     cbar = ax.figure.colorbar(im, ax=ax,)
     cbar.ax.set_ylabel('Correlation coefficient',
@@ -210,12 +226,14 @@ def correlation_plot(data: pd.DataFrame,
     ax.grid(which='minor', color='w', linestyle='-', linewidth=3)
     ax.tick_params(which='minor', bottom=False, left=False)
     # Set tick labels and rotations
-    ax.set_xticks(np.arange(len(correlations)),
-                  labels=labels,
-                  rotation=45,
-                  ha='right')
-    ax.set_yticks(np.arange(len(correlations)),
-                  labels=labels)
+    if labels is not None:
+        labels = labels[idx]
+        ax.set_xticks(np.arange(len(correlations)),
+                      labels=labels,
+                      rotation=45,
+                      ha='right')
+        ax.set_yticks(np.arange(len(correlations)),
+                      labels=labels)
     # Save figure
     fig.tight_layout()
     fig.savefig('results/figures/' + filename,
