@@ -129,10 +129,7 @@ def _load_welders():
             'ethnicity',
             'highest_education',
             'years_of_education',
-            'currently_smoking',
-            'elt',
-            'e90',
-            'hrsw']
+            'currently_smoking']
     project_data_list = []
     columns = covs + metal_names_37016
     for file in project_files:
@@ -294,7 +291,9 @@ def get_exposures(type: str = 'farmers'):
                      'percent_application',
                      'protective_equipment_new']
     elif type == 'welders':
-        exposures = []
+        exposures = ['elt',
+                     'e90',
+                     'hrsw']
     else:
         raise ValueError('type should be farmers or welders')
 
