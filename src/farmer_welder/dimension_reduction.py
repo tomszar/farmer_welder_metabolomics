@@ -30,10 +30,13 @@ def get_PCA_scores(pca: PCA,
     return scores
 
 
+# Get initial data
 farmers_bs = load.load_baseline_data('farmers')
 welders_bs = load.load_baseline_data('welders')
 metabolites = load.get_metabolites()
-exp_welders = load.get_exposures('welders')
+exp_names_w = load.get_exposures('welders')
+exp_names_f = load.get_exposures()
+# Run PCA
 pca = PCA()
 X = stats.transform_data(welders_bs.loc[:, metabolites])
 pca.fit(X)
@@ -44,32 +47,28 @@ features = np.abs(pca.components_[1]).argsort()[::-1][:5]
 print('List of metabolites that contribute to component 2')
 print(np.array(metabolites)[features])
 
+# Get all data
 farmers_all = pd.read_csv('data/processed/farmers.csv')
 welders_all = pd.read_csv('data/processed/welders.csv')
-
-exposures = stats.transform_data(welders_all.loc[:, exp_welders])
+exp_welders = stats.transform_data(welders_all.loc[:, exp_names_w])
+exp_famers = stats.transform_data(farmers_all.loc[:, exp_names_f])
 welders_scores = get_PCA_scores(pca, welders_all.loc[:, metabolites])
 farmers_scores = get_PCA_scores(pca, farmers_all.loc[:, metabolites])
 
-figures.plot_pca_scores(welders_scores,
-                        continuous=exposures.loc[:, 'e90'],
-                        filename='PCA_welders_e90')
+for exp in exp_names_w:
+    figures.plot_pca_scores(welders_scores,
+                            continuous=exp_welders.loc[:, exp],
+                            filename='PCA_welders_' + exp)
 
-figures.plot_pca_scores(welders_scores,
-                        continuous=exposures.loc[:, 'elt'],
-                        filename='PCA_welders_elt')
+for g in ['research_subject', 'project_id']:
+    figures.plot_pca_scores(welders_scores,
+                            groups=welders_all.loc[:, g],
+                            filename='PCA_welders_' + g)
+    figures.plot_pca_scores(farmers_scores,
+                            groups=farmers_all.loc[:, g],
+                            filename='PCA_farmers_' + g)
 
-figures.plot_pca_scores(welders_scores,
-                        groups=welders_all.loc[:, 'research_subject'],
-                        filename='PCA_welders_groups')
-
-figures.plot_pca_scores(welders_scores,
-                        groups=welders_all.loc[:, 'project_id'],
-                        filename='PCA_welders_project')
-
-figures.plot_pca_scores(welders_scores,
-                        continuous=welders_all.loc[:, 'age'],
-                        filename='PCA_welders_age')
-
-full_welders = pd.concat([welders_all, pd.DataFrame(welders_scores)], axis=1)
-full_welders.to_csv('results/Welder_scores.csv')
+for exp in exp_names_f:
+    figures.plot_pca_scores(farmers_scores,
+                            continuous=farmers_all.loc[:, exp],
+                            filename='PCA_farmers_' + exp)
