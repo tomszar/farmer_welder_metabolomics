@@ -5,7 +5,7 @@ import matplotlib.lines as mlines
 
 from typing import Union
 from matplotlib import cm
-from ..stats import stats
+from farmer_welder.stats import stats
 
 
 def concentration_violinplot(D: Union[pd.DataFrame, pd.Series],
@@ -112,23 +112,23 @@ def concentration_violinplot(D: Union[pd.DataFrame, pd.Series],
                 dpi=600)
 
 
-def plot_pca_scores(pca_scores,
-                    groups=None,
-                    continuous=None,
-                    filename='metabolites_pca'):
+def plot_pca_scores(pca_scores: np.ndarray,
+                    groups: Union[np.ndarray, pd.Series, None] = None,
+                    continuous: Union[np.ndarray, pd.Series, None] = None,
+                    filename: str = 'metabolites_pca'):
     '''
     Plot the PCA scores
 
     Parameters
     ----------
     pca_scores: np.ndarray
-        scores from a PCA
-    groups: np.array
-        grouping categories to plot
-    continuous: np.array
+        scores from a PCA.
+    groups: np.array or pd.Series
+        grouping categories to plot.
+    continuous: np.array or pd.Series
         continuous variable to use for color
     filename: str
-        name of figure file
+        name of figure file without extension.
     '''
     n_vars = pca_scores.shape[1]
     n_plots = n_vars // 2
@@ -150,15 +150,21 @@ def plot_pca_scores(pca_scores,
             comp = 0
             for m in range(n_plots):
                 axes[m].scatter(pca_scores[b, comp],
-                                pca_scores[b, comp + 1])
+                                pca_scores[b, comp + 1],
+                                label=i)
                 comp = comp + 2
+        plt.legend()
     elif continuous is not None:
         comp = 0
         for m in range(n_plots):
-            axes[m].scatter(pca_scores[:, comp],
-                            pca_scores[:, comp + 1],
-                            c=continuous)
+            scatter = axes[m].scatter(pca_scores[:, comp],
+                                      pca_scores[:, comp + 1],
+                                      c=continuous,
+                                      label=continuous)
             comp = comp + 2
+        # produce a legend with a cross section of continuous from the scatter
+        handles, labels = scatter.legend_elements(prop="colors", alpha=0.6)
+        plt.legend(handles, labels, loc="upper right", title="Sizes")
     else:
         comp = 0
         for m in range(n_plots):

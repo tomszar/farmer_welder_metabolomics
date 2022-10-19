@@ -96,7 +96,7 @@ def transform_data(data: Union[pd.DataFrame, pd.Series],
     '''
     transformed_data = data.copy()
     if log2_transform:
-        transformed_data = np.log2(transformed_data)
+        transformed_data = np.log2(transformed_data + 1/100000000)
 
     if zscore_transform:
         if isinstance(transformed_data, pd.DataFrame):
