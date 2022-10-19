@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 
-def load_data(type: str = 'farmers'):
+def load_raw_data(type: str = 'farmers'):
     '''
     Load complete data for either farmers or welders
 
@@ -21,9 +21,9 @@ def load_data(type: str = 'farmers'):
     metabolites = pd.read_csv('data/raw/metabolite_concentration.csv')
 
     if type == 'farmers':
-        full_project = _load_farmers()
+        full_project = _load_raw_farmers()
     elif type == 'welders':
-        full_project = _load_welders()
+        full_project = _load_raw_welders()
         # Welder 36 is control
         id36 = full_project['study_id'] == 36
         full_project.loc[id36, 'research_subject'] = 'Control'
@@ -48,7 +48,7 @@ def load_data(type: str = 'farmers'):
     return(final_data)
 
 
-def _load_farmers():
+def _load_raw_farmers():
     '''
     Load farmers databases concatenated
 
@@ -94,7 +94,7 @@ def _load_farmers():
     return(full_project)
 
 
-def _load_welders():
+def _load_raw_welders():
     '''
     Load welders databases concatenated
 
