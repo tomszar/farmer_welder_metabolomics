@@ -59,7 +59,7 @@ def EWAS(outcomes: list[str],
     dat_clean = data.loc[:, covariates + predictors + outcomes]
     # Log2 and normalize
     dat_clean.loc[:, outcomes] = np.log2(
-        dat_clean.loc[:, outcomes] + 1/100000000)
+        dat_clean.loc[:, outcomes] + (1 / 100000000))
     dat_clean = clarite.modify.categorize(dat_clean)
     var_types = clarite.describe.get_types(dat_clean)
     var_unknown = var_types[var_types == 'unknown'].index
@@ -96,9 +96,11 @@ def transform_data(data: Union[pd.DataFrame, pd.Series],
     '''
     transformed_data = data.copy()
     if log2_transform:
-        transformed_data = np.log2(transformed_data + 1/100000000)
+        print('Log2 transformation')
+        transformed_data = np.log2(transformed_data + (1 / 100000000))
 
     if zscore_transform:
+        print('Zscore transformation')
         if isinstance(transformed_data, pd.DataFrame):
             for col in transformed_data.columns:
                 transformed_data[col] = (transformed_data[col] -
@@ -109,6 +111,7 @@ def transform_data(data: Union[pd.DataFrame, pd.Series],
                                 transformed_data.mean()) \
                 / transformed_data.std()
 
+    print('')
     return transformed_data
 
 

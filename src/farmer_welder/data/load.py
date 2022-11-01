@@ -66,7 +66,12 @@ def _load_raw_farmers():
             'race',
             'ethnicity',
             'highest_education',
-            'years_of_education']
+            'years_of_education',
+            'total_score',
+            'alcoholic_drinks',
+            'cigarettes',
+            'smoked_regularly',
+            'still_smoke']
     subject_replace = {1: 'Farmer',
                        3: 'Farmer',
                        2: 'Farmer Control',

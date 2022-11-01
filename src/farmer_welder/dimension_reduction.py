@@ -31,6 +31,7 @@ def get_PCA_scores(pca: PCA,
 
 
 # Get initial data
+print('Getting baseline data and running PCA')
 farmers_bs = load.load_baseline_data('farmers')
 welders_bs = load.load_baseline_data('welders')
 metabolites = load.get_metabolites()
@@ -48,18 +49,24 @@ print('List of metabolites that contribute to component 2')
 print(np.array(metabolites)[features])
 
 # Get all data
+print('Getting all data and projecting PCA')
 farmers_all = pd.read_csv('data/processed/farmers.csv')
 welders_all = pd.read_csv('data/processed/welders.csv')
+print('Transforming exposures')
 exp_welders = stats.transform_data(welders_all.loc[:, exp_names_w])
 exp_famers = stats.transform_data(farmers_all.loc[:, exp_names_f])
+print('Transforming metabolites')
 welders_scores = get_PCA_scores(pca, welders_all.loc[:, metabolites])
 farmers_scores = get_PCA_scores(pca, farmers_all.loc[:, metabolites])
 
+print('Plots')
+print('Welders exposures')
 for exp in exp_names_w:
     figures.plot_pca_scores(welders_scores,
                             continuous=exp_welders.loc[:, exp],
                             filename='PCA_welders_' + exp)
 
+print('Research subjects')
 for g in ['research_subject', 'project_id']:
     figures.plot_pca_scores(welders_scores,
                             groups=welders_all.loc[:, g],
@@ -68,7 +75,27 @@ for g in ['research_subject', 'project_id']:
                             groups=farmers_all.loc[:, g],
                             filename='PCA_farmers_' + g)
 
+print('Farmer exposures')
 for exp in exp_names_f:
+    print(exp)
     figures.plot_pca_scores(farmers_scores,
                             continuous=farmers_all.loc[:, exp],
                             filename='PCA_farmers_' + exp)
+
+print('Farmer covariates')
+for var in ['total_score',
+            'alcoholic_drinks',
+            'cigarettes',
+            'smoked_regularly',
+            'still_smoke']:
+    print(var)
+    if var == 'total_score':
+        print('')
+        # Remove NA from this variable
+        # figures.plot_pca_scores(farmers_scores,
+        #                         continuous=farmers_all.loc[:, var],
+        #                         filename='PCA_farmers_' + var)
+    else:
+        figures.plot_pca_scores(farmers_scores,
+                                groups=farmers_all.loc[:, var],
+                                filename='PCA_farmers_' + var)
