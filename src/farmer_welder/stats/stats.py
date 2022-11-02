@@ -94,13 +94,14 @@ def transform_data(data: Union[pd.DataFrame, pd.Series],
     transformed_data: pd.DataFrame
         Transformed data
     '''
+    print('=== Transforming data ===')
     transformed_data = data.copy()
     if log2_transform:
-        print('Log2 transformation')
+        print('Log2 transformation ...')
         transformed_data = np.log2(transformed_data + (1 / 100000000))
 
     if zscore_transform:
-        print('Zscore transformation')
+        print('Zscore transformation ...')
         if isinstance(transformed_data, pd.DataFrame):
             for col in transformed_data.columns:
                 transformed_data[col] = (transformed_data[col] -

@@ -123,6 +123,7 @@ def _load_raw_welders():
     metal_names_37016 = get_metals(37016)
     replace_metals = dict(zip(metal_names_5467,
                               metal_names_37016))
+    replace_mmse = {'total_score': 'mmse_total_score'}
     # Change type of research subject
     subject_replace = {1: 'Active',
                        2: 'Control'}
@@ -135,7 +136,10 @@ def _load_raw_welders():
             'ethnicity',
             'highest_education',
             'years_of_education',
-            'currently_smoking']
+            'currently_smoking',
+            'cognitive_impairment',
+            'upsit_score',
+            'mmse_total_score']
     project_data_list = []
     columns = covs + metal_names_37016 + exposures
     for file in project_files:
@@ -224,6 +228,8 @@ def _load_raw_welders():
             # Copy elt data from baseline to non-baseline
             project_data = copy_from_baseline(project_data,
                                               'elt')
+            project_data = project_data.rename(replace_mmse,
+                                               axis=1)
 
         project_data = replace_values(project_data,
                                       'research_subject',
