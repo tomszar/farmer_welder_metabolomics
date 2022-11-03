@@ -233,7 +233,8 @@ def correlation_plot(data: Union[pd.DataFrame, np.ndarray],
     ax.tick_params(which='minor', bottom=False, left=False)
     # Set tick labels and rotations
     if labels is not None:
-        labels = labels[idx]
+        tuples = sorted(zip(list(idx), labels))
+        idxl, labels = [t[0] for t in tuples], [t[1] for t in tuples]
         ax.set_xticks(np.arange(len(correlations)),
                       labels=labels,
                       rotation=45,

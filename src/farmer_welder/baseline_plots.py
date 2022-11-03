@@ -15,10 +15,12 @@ def main():
     # Create correlation and violinplots plots by cohort
     for study, dat in bs.groupby('Study ID'):
         figures.correlation_plot(dat[metabolites + metals + exposures],
+                                 labels=metabolites + metals + exposures,
                                  filename=full_corr_name + '_' +
                                  str(study) + '.png')
         for i, cols in enumerate([metabolites, metals, exposures]):
             figures.correlation_plot(dat[cols],
+                                     labels=cols,
                                      filename=filenames[i] + '_' +
                                      str(study) + '.png')
             groups = dat['research_subject']
