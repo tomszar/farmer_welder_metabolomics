@@ -115,21 +115,25 @@ def transform_data(data: Union[pd.DataFrame, pd.Series],
             not_grouping = [not elem for elem in grouping]
             if isinstance(transformed_data, pd.DataFrame):
                 t1 = pd.DataFrame(transformed_data.loc[grouping, :].
-                                  apply(zscore))
+                                  apply(zscore, nan_policy='omit'))
                 t2 = pd.DataFrame(transformed_data.loc[not_grouping, :].
-                                  apply(zscore))
+                                  apply(zscore, nan_policy='omit'))
             elif isinstance(transformed_data, pd.Series):
-                t1 = pd.Series(zscore(transformed_data.loc[grouping, :]))
-                t2 = pd.Series(zscore(transformed_data.loc[not_grouping, :]))
+                t1 = pd.Series(zscore(transformed_data.loc[grouping, :],
+                                      nan_policy='omit'))
+                t2 = pd.Series(zscore(transformed_data.loc[not_grouping, :],
+                                      nan_policy='omit'))
             else:
                 t1 = pd.DataFrame()
                 t2 = pd.DataFrame()
             transformed_data = pd.concat([t1, t2])
         else:
             if isinstance(transformed_data, pd.DataFrame):
-                transformed_data = transformed_data.apply(zscore)
+                transformed_data = transformed_data.apply(zscore,
+                                                          nan_policy='omit')
             elif isinstance(transformed_data, pd.Series):
-                transformed_data = pd.Series(zscore(transformed_data))
+                transformed_data = pd.Series(zscore(transformed_data,
+                                                    nan_policy='omit'))
 
     print('')
     return transformed_data

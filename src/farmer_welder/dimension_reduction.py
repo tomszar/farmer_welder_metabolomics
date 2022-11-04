@@ -79,8 +79,8 @@ def print_contributing_vars(pca: PCA,
         String to append at the end of printing statement.
     '''
     features = np.abs(pca.components_[component - 1]).argsort()[::-1][:5]
-    print(f'List of metabolites that contribute to component {component} ' +
-          f'in {suffix}')
+    print(f'List of metabolites that contribute to component {component} '
+          + f'in {suffix}')
     print(np.array(variables)[features])
 
 
@@ -144,7 +144,7 @@ def main():
     print('Welders exposures')
     for exp in exp_names_w:
         figures.plot_pca_scores(welders_scores,
-                                #continuous=exp_welders.loc[:, exp], # -> This is not working!!
+                                continuous=exp_welders.loc[:, exp],
                                 filename='PCA_welders_' + exp)
     print('Research subjects')
     for g in ['research_subject', 'project_id']:
