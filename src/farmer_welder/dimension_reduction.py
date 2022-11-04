@@ -1,16 +1,46 @@
 # Creating a PCA space with baseline subset only
 # Then projecting everyone onto that
+import numpy as np
+import pandas as pd
 
+from typing import Union
 from sklearn.decomposition import PCA
 from farmer_welder.data import load
 from farmer_welder.stats import stats
 from farmer_welder.visualization import figures
-import numpy as np
-import pandas as pd
+
+
+def run_PCA(dat: pd.DataFrame,
+            transform: bool = True,
+            grouping: Union[list[bool], None] = None) -> PCA:
+    '''
+    Run PCA on dataset
+
+    Parameters
+    ----------
+    dat: pd.DataFrame
+        Dataframe to apply the PCA.
+    transform: bool
+        Whether to apply transformation to the dataset or not (log2 and zscore)
+    grouping: Union[list[bool], None]
+        List of boolean with groupings to separate dataset.
+
+    Returns
+    -------
+    pca: PCA
+       PCA results
+    '''
+    pca = PCA()
+    if transform:
+        dat = stats.transform_data(dat,
+                                   grouping=grouping)
+    pca.fit(dat)
+    print(pca.explained_variance_ratio_.round(3))
+    return pca
 
 
 def get_PCA_scores(pca: PCA,
-                   X: pd.DataFrame):
+                   X: pd.DataFrame) -> np.ndarray:
     '''
     Get PCA scores from a PCA on metabolites from a baseline.
 
@@ -22,7 +52,7 @@ def get_PCA_scores(pca: PCA,
 
     Returns
     -------
-    scores: pd.DataFrame
+    scores: np.ndarray
         PCA scores obtained from projecting onto the PCA space.
     '''
     X = stats.transform_data(X)
@@ -54,6 +84,28 @@ def print_contributing_vars(pca: PCA,
     print(np.array(variables)[features])
 
 
+def get_groupings(dat: pd.DataFrame,
+                  col: str) -> list[bool]:
+    '''
+    Get groupings from a specified column.
+
+    Parameters
+    ----------
+    dat: pd.DataFrame
+        Dataframe to obtain the groupings.
+    col: str
+        Column to use for groupings.
+
+    Returns
+    -------
+    groupings: list[bool]
+        List of bool with groupings.
+    '''
+    groups = dat.loc[:, col].unique()
+    grouping = dat.loc[:, col] == groups[0]
+    return grouping
+
+
 def main():
     '''
     Main routine.
@@ -66,15 +118,14 @@ def main():
     exp_names_w = load.get_exposures('welders')
     exp_names_f = load.get_exposures()
     # Run PCA
-    pca_w = PCA()
-    pca_f = PCA()
-    Xw = stats.transform_data(welders_bs.loc[:, metabolites])
-    Xf = stats.transform_data(farmers_bs.loc[:, metabolites])
-    pca_w.fit(Xw)
-    pca_f.fit(Xf)
-    print(pca_w.explained_variance_ratio_.round(3))
-    print(pca_f.explained_variance_ratio_.round(3))
-
+    grouping_w = get_groupings(welders_bs,
+                               'project_id')
+    grouping_f = get_groupings(farmers_bs,
+                               'project_id')
+    pca_w = run_PCA(welders_bs.loc[:, metabolites],
+                    grouping=grouping_w)
+    pca_f = run_PCA(farmers_bs.loc[:, metabolites],
+                    grouping=grouping_f)
     # Get contribution of variables
     print_contributing_vars(pca_w, 2, metabolites, 'welders')
     print_contributing_vars(pca_f, 2, metabolites, 'farmers')
@@ -88,11 +139,12 @@ def main():
     print('Transforming metabolites')
     welders_scores = get_PCA_scores(pca_w, welders_all.loc[:, metabolites])
     farmers_scores = get_PCA_scores(pca_f, farmers_all.loc[:, metabolites])
+    print(welders_scores)
     print('Plots')
     print('Welders exposures')
     for exp in exp_names_w:
         figures.plot_pca_scores(welders_scores,
-                                continuous=exp_welders.loc[:, exp],
+                                #continuous=exp_welders.loc[:, exp], # -> This is not working!!
                                 filename='PCA_welders_' + exp)
     print('Research subjects')
     for g in ['research_subject', 'project_id']:

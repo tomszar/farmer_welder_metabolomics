@@ -4,6 +4,7 @@ import pandas as pd
 import scipy.cluster.hierarchy as sch
 
 from typing import Union
+from scipy.stats import zscore
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
@@ -80,14 +81,22 @@ def EWAS(outcomes: list[str],
 
 def transform_data(data: Union[pd.DataFrame, pd.Series],
                    log2_transform: bool = True,
-                   zscore_transform: bool = True):
+                   zscore_transform: bool = True,
+                   grouping: Union[list[bool], None] = None) -> \
+        Union[pd.DataFrame, pd.Series]:
     '''
     Zscore normalize dataframe
 
     Parameters
     ----------
     data: pd.DataFrame or pd.Series
-        Data to normalize
+        Data to normalize.
+    log2_transform: bool
+        Whether to log2 transform or not.
+    zscore_transform: bool
+        Whether to zscore transform or not.
+    grouping: Union[list[bool], None]
+        List of boolean to generate two groups on which to apply the zscore.
 
     Returns
     ----------
@@ -102,15 +111,25 @@ def transform_data(data: Union[pd.DataFrame, pd.Series],
 
     if zscore_transform:
         print('Zscore transformation ...')
-        if isinstance(transformed_data, pd.DataFrame):
-            for col in transformed_data.columns:
-                transformed_data[col] = (transformed_data[col] -
-                                         transformed_data[col].mean()) \
-                    / transformed_data[col].std()
-        elif isinstance(transformed_data, pd.Series):
-            transformed_data = (transformed_data -
-                                transformed_data.mean()) \
-                / transformed_data.std()
+        if grouping is not None:
+            not_grouping = [not elem for elem in grouping]
+            if isinstance(transformed_data, pd.DataFrame):
+                t1 = pd.DataFrame(transformed_data.loc[grouping, :].
+                                  apply(zscore))
+                t2 = pd.DataFrame(transformed_data.loc[not_grouping, :].
+                                  apply(zscore))
+            elif isinstance(transformed_data, pd.Series):
+                t1 = pd.Series(zscore(transformed_data.loc[grouping, :]))
+                t2 = pd.Series(zscore(transformed_data.loc[not_grouping, :]))
+            else:
+                t1 = pd.DataFrame()
+                t2 = pd.DataFrame()
+            transformed_data = pd.concat([t1, t2])
+        else:
+            if isinstance(transformed_data, pd.DataFrame):
+                transformed_data = transformed_data.apply(zscore)
+            elif isinstance(transformed_data, pd.Series):
+                transformed_data = pd.Series(zscore(transformed_data))
 
     print('')
     return transformed_data
@@ -134,7 +153,7 @@ def cluster_corr(corr_array):
     pairwise_distances = sch.distance.pdist(corr_array)
     linkage = sch.linkage(pairwise_distances,
                           method='complete')
-    cluster_distance_threshold = pairwise_distances.max()/2
+    cluster_distance_threshold = pairwise_distances.max() / 2
     idx_to_cluster_array = sch.fcluster(linkage,
                                         cluster_distance_threshold,
                                         criterion='distance')
