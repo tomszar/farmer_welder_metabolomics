@@ -4,6 +4,7 @@ import pandas as pd
 import scipy.cluster.hierarchy as sch
 
 from typing import Union
+from scipy.stats import zscore
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
@@ -59,7 +60,7 @@ def EWAS(outcomes: list[str],
     dat_clean = data.loc[:, covariates + predictors + outcomes]
     # Log2 and normalize
     dat_clean.loc[:, outcomes] = np.log2(
-        dat_clean.loc[:, outcomes] + 1/100000000)
+        dat_clean.loc[:, outcomes] + (1 / 100000000))
     dat_clean = clarite.modify.categorize(dat_clean)
     var_types = clarite.describe.get_types(dat_clean)
     var_unknown = var_types[var_types == 'unknown'].index
@@ -80,35 +81,61 @@ def EWAS(outcomes: list[str],
 
 def transform_data(data: Union[pd.DataFrame, pd.Series],
                    log2_transform: bool = True,
-                   zscore_transform: bool = True):
+                   zscore_transform: bool = True,
+                   grouping: Union[list[bool], None] = None) -> \
+        Union[pd.DataFrame, pd.Series]:
     '''
     Zscore normalize dataframe
 
     Parameters
     ----------
     data: pd.DataFrame or pd.Series
-        Data to normalize
+        Data to normalize.
+    log2_transform: bool
+        Whether to log2 transform or not.
+    zscore_transform: bool
+        Whether to zscore transform or not.
+    grouping: Union[list[bool], None]
+        List of boolean to generate two groups on which to apply the zscore.
 
     Returns
     ----------
     transformed_data: pd.DataFrame
         Transformed data
     '''
+    print('=== Transforming data ===')
     transformed_data = data.copy()
     if log2_transform:
-        transformed_data = np.log2(transformed_data)
+        print('Log2 transformation ...')
+        transformed_data = np.log2(transformed_data + (1 / 100000000))
 
     if zscore_transform:
-        if isinstance(transformed_data, pd.DataFrame):
-            for col in transformed_data.columns:
-                transformed_data[col] = (transformed_data[col] -
-                                         transformed_data[col].mean()) \
-                    / transformed_data[col].std()
-        elif isinstance(transformed_data, pd.Series):
-            transformed_data = (transformed_data -
-                                transformed_data.mean()) \
-                / transformed_data.std()
+        print('Zscore transformation ...')
+        if grouping is not None:
+            not_grouping = [not elem for elem in grouping]
+            if isinstance(transformed_data, pd.DataFrame):
+                t1 = pd.DataFrame(transformed_data.loc[grouping, :].
+                                  apply(zscore, nan_policy='omit'))
+                t2 = pd.DataFrame(transformed_data.loc[not_grouping, :].
+                                  apply(zscore, nan_policy='omit'))
+            elif isinstance(transformed_data, pd.Series):
+                t1 = pd.Series(zscore(transformed_data.loc[grouping, :],
+                                      nan_policy='omit'))
+                t2 = pd.Series(zscore(transformed_data.loc[not_grouping, :],
+                                      nan_policy='omit'))
+            else:
+                t1 = pd.DataFrame()
+                t2 = pd.DataFrame()
+            transformed_data = pd.concat([t1, t2])
+        else:
+            if isinstance(transformed_data, pd.DataFrame):
+                transformed_data = transformed_data.apply(zscore,
+                                                          nan_policy='omit')
+            elif isinstance(transformed_data, pd.Series):
+                transformed_data = pd.Series(zscore(transformed_data,
+                                                    nan_policy='omit'))
 
+    print('')
     return transformed_data
 
 
@@ -130,7 +157,7 @@ def cluster_corr(corr_array):
     pairwise_distances = sch.distance.pdist(corr_array)
     linkage = sch.linkage(pairwise_distances,
                           method='complete')
-    cluster_distance_threshold = pairwise_distances.max()/2
+    cluster_distance_threshold = pairwise_distances.max() / 2
     idx_to_cluster_array = sch.fcluster(linkage,
                                         cluster_distance_threshold,
                                         criterion='distance')

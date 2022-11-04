@@ -2,8 +2,8 @@ from .data import load
 
 
 def main():
-    farmers = load.load_data('farmers')
-    welders = load.load_data('welders')
+    farmers = load.load_raw_data('farmers')
+    welders = load.load_raw_data('welders')
 
     farmers.to_csv('data/processed/farmers.csv',
                    index=False)

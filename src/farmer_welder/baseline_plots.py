@@ -15,17 +15,21 @@ def main():
     # Create correlation and violinplots plots by cohort
     for study, dat in bs.groupby('Study ID'):
         figures.correlation_plot(dat[metabolites + metals + exposures],
-                                 full_corr_name + '_' + str(study) + '.png')
+                                 labels=metabolites + metals + exposures,
+                                 filename=full_corr_name + '_' +
+                                 str(study) + '.png')
         for i, cols in enumerate([metabolites, metals, exposures]):
             figures.correlation_plot(dat[cols],
-                                     filenames[i] + '_' + str(study) + '.png')
+                                     labels=cols,
+                                     filename=filenames[i] + '_' +
+                                     str(study) + '.png')
             groups = dat['research_subject']
             names = ['metabolites', 'metals']
             titles = ['Metabolite concentrations',
                       'Metal concentrations']
             if i < 2:
                 if i == 0:
-                    data_violin = dat[cols] + 1/100000000
+                    data_violin = dat[cols] + 1 / 100000000
                 else:
                     data_violin = dat[cols]
                 data_violin = stats.transform_data(data_violin)

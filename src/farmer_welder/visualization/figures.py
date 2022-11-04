@@ -5,7 +5,7 @@ import matplotlib.lines as mlines
 
 from typing import Union
 from matplotlib import cm
-from ..stats import stats
+from farmer_welder.stats import stats
 
 
 def concentration_violinplot(D: Union[pd.DataFrame, pd.Series],
@@ -112,23 +112,23 @@ def concentration_violinplot(D: Union[pd.DataFrame, pd.Series],
                 dpi=600)
 
 
-def plot_pca_scores(pca_scores,
-                    groups=None,
-                    continuous=None,
-                    filename='metabolites_pca'):
+def plot_pca_scores(pca_scores: np.ndarray,
+                    groups: Union[np.ndarray, pd.Series, None] = None,
+                    continuous: Union[np.ndarray, pd.Series, None] = None,
+                    filename: str = 'metabolites_pca'):
     '''
     Plot the PCA scores
 
     Parameters
     ----------
     pca_scores: np.ndarray
-        scores from a PCA
-    groups: np.array
-        grouping categories to plot
-    continuous: np.array
+        scores from a PCA.
+    groups: np.array or pd.Series
+        grouping categories to plot.
+    continuous: np.array or pd.Series
         continuous variable to use for color
     filename: str
-        name of figure file
+        name of figure file without extension.
     '''
     n_vars = pca_scores.shape[1]
     n_plots = n_vars // 2
@@ -150,15 +150,21 @@ def plot_pca_scores(pca_scores,
             comp = 0
             for m in range(n_plots):
                 axes[m].scatter(pca_scores[b, comp],
-                                pca_scores[b, comp + 1])
+                                pca_scores[b, comp + 1],
+                                label=i)
                 comp = comp + 2
+        plt.legend()
     elif continuous is not None:
         comp = 0
         for m in range(n_plots):
-            axes[m].scatter(pca_scores[:, comp],
-                            pca_scores[:, comp + 1],
-                            c=continuous)
+            scatter = axes[m].scatter(pca_scores[:, comp],
+                                      pca_scores[:, comp + 1],
+                                      c=continuous,
+                                      label=continuous)
             comp = comp + 2
+        # produce a legend with a cross section of continuous from the scatter
+        handles, labels = scatter.legend_elements(prop="colors", alpha=0.6)
+        plt.legend(handles, labels, loc="upper right", title="Sizes")
     else:
         comp = 0
         for m in range(n_plots):
@@ -171,7 +177,9 @@ def plot_pca_scores(pca_scores,
                 dpi=600)
 
 
-def correlation_plot(data: pd.DataFrame,
+def correlation_plot(data: Union[pd.DataFrame, np.ndarray],
+                     labels: Union[list[str], None] = None,
+                     estimate_corr: bool = True,
                      filename: str = 'correlation_plot.png'):
     '''
     Generation a correlation plot over all columns of data
@@ -180,24 +188,38 @@ def correlation_plot(data: pd.DataFrame,
     ----------
     data: pd.DataFrame
         Data from which to generate the correlation plot
+    estimate_corr: bool
+        Whether to estimate the correlation or not. If False,
+        it's assumed that the data is a correlation or distance matrix
     filename: str
         Name of the plot file
     '''
-    # Generate correlation and labels
-    correlations = np.array(data.corr())
-    np.fill_diagonal(correlations,
-                     0, wrap=False)
-    labels = data.columns
+    if estimate_corr:
+        # Generate correlation and labels
+        correlations = np.array(pd.DataFrame(data).corr())
+        np.fill_diagonal(correlations,
+                         0, wrap=False)
+    else:
+        correlations = np.array(data)
+        np.fill_diagonal(correlations,
+                         0, wrap=False)
+
     # Sort the matrix to look better
     idx = stats.cluster_corr(correlations)
     correlations = correlations[idx, :][:, idx]
-    labels = labels[idx]
+
     # Generate the figure
     fig, ax = plt.subplots(figsize=(10, 8))
+    vmin = correlations.min()
+    vmax = correlations.max()
+    if vmin < 0:
+        cmap = 'PiYG'
+    else:
+        cmap = 'Reds'
     im = ax.imshow(correlations,
-                   cmap='PiYG',
-                   vmin=-1,
-                   vmax=1)
+                   cmap=cmap,
+                   vmin=vmin,
+                   vmax=vmax)
     # Create colorbar
     cbar = ax.figure.colorbar(im, ax=ax,)
     cbar.ax.set_ylabel('Correlation coefficient',
@@ -210,12 +232,15 @@ def correlation_plot(data: pd.DataFrame,
     ax.grid(which='minor', color='w', linestyle='-', linewidth=3)
     ax.tick_params(which='minor', bottom=False, left=False)
     # Set tick labels and rotations
-    ax.set_xticks(np.arange(len(correlations)),
-                  labels=labels,
-                  rotation=45,
-                  ha='right')
-    ax.set_yticks(np.arange(len(correlations)),
-                  labels=labels)
+    if labels is not None:
+        tuples = sorted(zip(list(idx), labels))
+        idxl, labels = [t[0] for t in tuples], [t[1] for t in tuples]
+        ax.set_xticks(np.arange(len(correlations)),
+                      labels=labels,
+                      rotation=45,
+                      ha='right')
+        ax.set_yticks(np.arange(len(correlations)),
+                      labels=labels)
     # Save figure
     fig.tight_layout()
     fig.savefig('results/figures/' + filename,

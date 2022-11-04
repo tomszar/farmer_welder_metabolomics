@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 
-def load_data(type: str = 'farmers'):
+def load_raw_data(type: str = 'farmers'):
     '''
     Load complete data for either farmers or welders
 
@@ -21,9 +21,9 @@ def load_data(type: str = 'farmers'):
     metabolites = pd.read_csv('data/raw/metabolite_concentration.csv')
 
     if type == 'farmers':
-        full_project = _load_farmers()
+        full_project = _load_raw_farmers()
     elif type == 'welders':
-        full_project = _load_welders()
+        full_project = _load_raw_welders()
         # Welder 36 is control
         id36 = full_project['study_id'] == 36
         full_project.loc[id36, 'research_subject'] = 'Control'
@@ -48,7 +48,7 @@ def load_data(type: str = 'farmers'):
     return(final_data)
 
 
-def _load_farmers():
+def _load_raw_farmers():
     '''
     Load farmers databases concatenated
 
@@ -66,16 +66,21 @@ def _load_farmers():
             'race',
             'ethnicity',
             'highest_education',
-            'years_of_education']
+            'years_of_education',
+            'total_score',
+            'alcoholic_drinks',
+            'cigarettes',
+            'smoked_regularly',
+            'still_smoke']
     subject_replace = {1: 'Farmer',
                        3: 'Farmer',
                        2: 'Farmer Control',
                        4: 'Farmer Control'}
     project_data_list = []
+    columns = covs + exposures
     for file in project_files:
         project_data = pd.read_csv(file,
                                    sep=';')
-        columns = covs + exposures
         if '42368' in file:
             replace_col_names = {'study_id_number': 'study_id'}
             project_data.rename(columns=replace_col_names,
@@ -94,7 +99,7 @@ def _load_farmers():
     return(full_project)
 
 
-def _load_welders():
+def _load_raw_welders():
     '''
     Load welders databases concatenated
 
@@ -113,10 +118,12 @@ def _load_welders():
         Concatenated welders databases
     '''
     project_files = glob.glob('data/raw/Project_*welders.csv')
+    exposures = get_exposures('welders')
     metal_names_5467 = get_metals()
     metal_names_37016 = get_metals(37016)
     replace_metals = dict(zip(metal_names_5467,
                               metal_names_37016))
+    replace_mmse = {'total_score': 'mmse_total_score'}
     # Change type of research subject
     subject_replace = {1: 'Active',
                        2: 'Control'}
@@ -130,11 +137,11 @@ def _load_welders():
             'highest_education',
             'years_of_education',
             'currently_smoking',
-            'elt',
-            'e90',
-            'hrsw']
+            'cognitive_impairment',
+            'upsit_score',
+            'mmse_total_score']
     project_data_list = []
-    columns = covs + metal_names_37016
+    columns = covs + metal_names_37016 + exposures
     for file in project_files:
         project_data = pd.read_csv(file,
                                    sep=';')
@@ -221,6 +228,8 @@ def _load_welders():
             # Copy elt data from baseline to non-baseline
             project_data = copy_from_baseline(project_data,
                                               'elt')
+            project_data = project_data.rename(replace_mmse,
+                                               axis=1)
 
         project_data = replace_values(project_data,
                                       'research_subject',
@@ -294,7 +303,9 @@ def get_exposures(type: str = 'farmers'):
                      'percent_application',
                      'protective_equipment_new']
     elif type == 'welders':
-        exposures = []
+        exposures = ['elt',
+                     'e90',
+                     'hrsw']
     else:
         raise ValueError('type should be farmers or welders')
 
