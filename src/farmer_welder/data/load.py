@@ -5,24 +5,28 @@ import numpy as np
 import pandas as pd
 
 
-def load_raw_data(type: str = 'farmers'):
-    '''
+def load_raw_data(cohort: str = 'farmers') -> pd.DataFrame:
+    """
     Load complete data for either farmers or welders
 
-    Returns
+    Parameters
     ----------
-    dat: pd.DataFrame
-        Data frame with complete data
-    '''
+    cohort: str
+        Either the 'farmers' or 'welders' cohort.
 
+    Returns
+    -------
+    dat: pd.DataFrame
+        Data frame with complete data.
+    """
     # READ DATA #
     ids = pd.read_csv('data/raw/project_IDs.csv')
     ids = update_visit_info(ids)
     metabolites = pd.read_csv('data/raw/metabolite_concentration.csv')
 
-    if type == 'farmers':
+    if cohort == 'farmers':
         full_project = _load_raw_farmers()
-    elif type == 'welders':
+    elif cohort == 'welders':
         full_project = _load_raw_welders()
         # Welder 36 is control
         id36 = full_project['study_id'] == 36
@@ -33,7 +37,7 @@ def load_raw_data(type: str = 'farmers'):
     # MERGE DATA
     merge_left = ['project_id', 'study_id']
     merge_right = ['Study ID', 'Subj ID']
-    if type == 'welders':
+    if cohort == 'welders':
         merge_left.append('redcap_event_name')
         merge_right.append('redcap_event_name')
 
@@ -45,33 +49,21 @@ def load_raw_data(type: str = 'farmers'):
                           first_merge,
                           left_on=merge_left,
                           right_on=merge_right)
-    return(final_data)
+    return final_data
 
 
-def _load_raw_farmers():
-    '''
+def _load_raw_farmers() -> pd.DataFrame:
+    """
     Load farmers databases concatenated
 
     Returns
-    ----------
+    -------
     full_project: pd.DataFrame
         Concatenated farmer databases
-    '''
+    """
     project_files = glob.glob('data/raw/Project_*farmers.csv')
     exposures = get_exposures('farmers')
-    covs = ['study_id',
-            'research_subject',
-            'age',
-            'sex',
-            'race',
-            'ethnicity',
-            'highest_education',
-            'years_of_education',
-            'total_score',
-            'alcoholic_drinks',
-            'cigarettes',
-            'smoked_regularly',
-            'still_smoke']
+    covs = get_covariates('farmers')
     subject_replace = {1: 'Farmer',
                        3: 'Farmer',
                        2: 'Farmer Control',
@@ -96,29 +88,21 @@ def _load_raw_farmers():
     full_project = pd.concat(project_data_list).reset_index(drop=True)
     # NA in exposures are 0
     full_project[exposures] = full_project[exposures].fillna(0)
-    return(full_project)
+    return full_project
 
 
-def _load_raw_welders():
-    '''
+def _load_raw_welders() -> pd.DataFrame:
+    """
     Load welders databases concatenated
-
-    Parameters
-    ----------
-    baseline: bool
-        Whether to return only baseline participants or not.
-        Default False
-    non_retired_only: bool
-        Whether to return only non retired participants or not.
-        Default False
 
     Returns
     ----------
     full_project: pd.DataFrame
         Concatenated welders databases
-    '''
+    """
     project_files = glob.glob('data/raw/Project_*welders.csv')
     exposures = get_exposures('welders')
+    covs = get_covariates('welders')
     metal_names_5467 = get_metals()
     metal_names_37016 = get_metals(37016)
     replace_metals = dict(zip(metal_names_5467,
@@ -127,19 +111,6 @@ def _load_raw_welders():
     # Change type of research subject
     subject_replace = {1: 'Active',
                        2: 'Control'}
-    covs = ['study_id',
-            'redcap_event_name',
-            'research_subject',
-            'age',
-            'sex',
-            'race',
-            'ethnicity',
-            'highest_education',
-            'years_of_education',
-            'currently_smoking',
-            'cognitive_impairment',
-            'upsit_score',
-            'mmse_total_score']
     project_data_list = []
     columns = covs + metal_names_37016 + exposures
     for file in project_files:
@@ -240,33 +211,28 @@ def _load_raw_welders():
         project_data_list.append(project_data)
 
     full_project = pd.concat(project_data_list).reset_index(drop=True)
-
-    # NAs in smoking exposure are zero
-    full_project['currently_smoking'] = full_project['currently_smoking'].\
-        fillna(0)
-
-    return(full_project)
+    return full_project
 
 
-def load_baseline_data(type: str = 'farmers'):
-    '''
+def load_baseline_data(cohort: str = 'farmers') -> pd.DataFrame:
+    """
     Get the baseline data from welders or farmers
 
     Parameters
     ----------
-    type: str
+    cohort: str
         The type of data, either farmers or welders
 
     Returns
-    ----------
+    -------
     baseline_data: pd.DataFrame
         Baseline dataframe
-    '''
-    if type == 'farmers':
+    """
+    if cohort == 'farmers':
         farmers = pd.read_csv('data/processed/farmers.csv')
         baseline_data = farmers.drop_duplicates(subset='Internal Code',
                                                 keep='first')
-    elif type == 'welders':
+    elif cohort == 'welders':
         welders = pd.read_csv('data/processed/welders.csv')
         non_duplicated = ~welders['Internal Code'].duplicated(keep=False)
         welders_nd = welders.loc[non_duplicated, :]
@@ -281,46 +247,46 @@ def load_baseline_data(type: str = 'farmers'):
     return pd.DataFrame(baseline_data)
 
 
-def get_exposures(type: str = 'farmers'):
-    '''
+def get_exposures(cohort: str = 'farmers') -> list[str]:
+    """
     Get a list of exposures depending on the type of data
 
     Parameters
     ----------
-    type: str
+    cohort: str
         The type of data, either farmers or welders
 
     Returns
     ----------
-    exposures: list of str
+    exposures: list[str]
         A list of exposure columns
-    '''
-    if type == 'farmers':
+    """
+    if cohort == 'farmers':
         exposures = ['mixed_or_applied',
                      'years_mix_or_apply',
                      'days_mix_or_apply',
                      'percent_mix',
                      'percent_application',
                      'protective_equipment_new']
-    elif type == 'welders':
+    elif cohort == 'welders':
         exposures = ['elt',
                      'e90',
                      'hrsw']
     else:
         raise ValueError('type should be farmers or welders')
 
-    return(exposures)
+    return exposures
 
 
 def get_metabolites():
-    '''
-    Get list of metabolite names
+    """
+    Get list of metabolite names.
 
     Returns
     ----------
-    metabolties: list of str
+    metabolites: list of str
         List of metabolite names
-    '''
+    """
     metabolites = ['2-Oxoisocaproate', '3-Hydroxybutyrate',
                    '3-Hydroxyisovalerate', '3-Methyl-2-oxovalerate',
                    'Acetate', 'Acetone', 'Alanine', 'Citrate',
@@ -329,11 +295,53 @@ def get_metabolites():
                    'Leucine', 'Lysine', 'Mannose', 'Phenylalanine',
                    'Pyruvate', 'Succinate', 'Threonine', 'Trimethylamine',
                    'Tryptophan', 'Tyrosine', 'Valine']
-    return(metabolites)
+    return metabolites
 
 
-def get_metals(study: int = 5467):
-    '''
+def get_covariates(cohort: str = 'welders') -> list[str]:
+    """
+    Get list of covariate names.
+
+    Returns
+    -------
+    covariates: list[str]
+    """
+    if cohort == 'welders':
+        covariates = ['study_id',
+                      'redcap_event_name',
+                      'research_subject',
+                      'age',
+                      'sex',
+                      'race',
+                      'ethnicity',
+                      'highest_education',
+                      'years_of_education',
+                      'smoked_regularly',
+                      'cognitive_impairment',
+                      'upsit_score',
+                      'mmse_total_score']
+    elif cohort == 'farmers':
+        covariates = ['study_id',
+                      'research_subject',
+                      'age',
+                      'sex',
+                      'race',
+                      'ethnicity',
+                      'highest_education',
+                      'years_of_education',
+                      'total_score',
+                      'alcoholic_drinks',
+                      'cigarettes',
+                      'smoked_regularly',
+                      'still_smoke']
+    else:
+        covariates = []
+
+    return covariates
+
+
+def get_metals(study: int = 5467) -> list[str]:
+    """
     Get the column names for the metal level measures
     that overlap across studies.
 
@@ -341,7 +349,11 @@ def get_metals(study: int = 5467):
     ----------
     study: int
         Study, either 5467 or 37016
-    '''
+
+    Returns
+    -------
+    metals: list[str]
+    """
     if study == 5467:
         metals = ['whole blood Zn (ug/L)',
                   'whole blood Cu (ug/L)',
@@ -356,13 +368,13 @@ def get_metals(study: int = 5467):
                   'fe']
     else:
         raise ValueError('Enter a valid study ID: 5467 or 37016')
-    return(metals)
+    return metals
 
 
-def update_visit_info(data):
-    '''
+def update_visit_info(data: pd.DataFrame) -> pd.DataFrame:
+    """
     Update the visit information from the project_IDs file.
-    Some visit, even though are sequential (e.g. 4 and 5), dont'
+    Some visit, even though are sequential (e.g. 4 and 5), don't
     match the visit code used in other files (e.g. 1 and 2).
 
     Parameters
@@ -371,22 +383,22 @@ def update_visit_info(data):
         Dataframe with the uncorrected visit information
 
     Returns
-    ----------
+    -------
     corrected_data: pd.DataFrame
         Corrected dataframe
-    '''
+    """
     for ind, dat in data.groupby(['Study ID', 'Subj ID']):
         if sum(dat['Visit']) > 3 and len(dat) > 1:
             data.iloc[dat.index[0], 5] = 1
             data.iloc[dat.index[1], 5] = 2
 
-    return(data)
+    return data
 
 
 def replace_values(data: pd.DataFrame,
                    col_name: str,
-                   to_replace: dict):
-    '''
+                   to_replace: dict) -> pd.DataFrame:
+    """
     Replace the values from a specific column in data based on to_replace dict
 
     Parameters
@@ -397,44 +409,44 @@ def replace_values(data: pd.DataFrame,
         Column name
     to_replace: dict
         Dictionary with the key and the value to replace the value with
-    '''
+    """
     data[col_name] = data[col_name].replace(to_replace)
-    return(data)
+    return data
 
 
 def get_age(collection_date: pd.DataFrame,
-            DOB: pd.DataFrame):
-    '''
+            dob: pd.DataFrame) -> np.ndarray:
+    """
     Get the age from the date of collection and DOB
 
     Parameters
     ----------
     collection_date: pd.DataFrame
         Column with collection date
-    DOB: pd.DataFrame
+    dob: pd.DataFrame
         Date of Birth
-    '''
-    dob = pd.to_datetime(DOB,
+    """
+    dob = pd.to_datetime(dob,
                          format='%d/%m/%Y')
     doc = pd.to_datetime(collection_date,
                          format='%d/%m/%Y')
     days = doc - dob
     age = np.floor(days / np.timedelta64(1, 'Y'))
-    return(age)
+    return age
 
 
 def copy_from_baseline(dat: pd.DataFrame,
-                       colname: str):
-    '''
+                       colname: str) -> pd.DataFrame:
+    """
     Copy the baseline information in colname to the other rows
 
     Parameters
     ----------
-    data: pd.DataFrame
+    dat: pd.DataFrame
         Data in which to copy
     colname: str
         Column name
-    '''
+    """
     data = dat.copy()
     data = data.set_index('study_id')
     col = data.groupby('study_id')[colname].max()
@@ -449,4 +461,4 @@ def copy_from_baseline(dat: pd.DataFrame,
     data = data.rename(columns={col_to_change:
                                 colname})
     data = data.reset_index()
-    return(data)
+    return data

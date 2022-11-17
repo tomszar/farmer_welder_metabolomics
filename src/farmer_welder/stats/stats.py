@@ -11,7 +11,7 @@ from sklearn.decomposition import PCA
 
 def generate_PCA(D,
                  standardize=True):
-    '''
+    """
     Generate a Principal Component Analysis
 
     Parameters
@@ -23,25 +23,25 @@ def generate_PCA(D,
         If False, it is assumed D contains standardize values
 
     Returns
-    ----------
+    -------
     pca: PCA
         PCA object
-    '''
+    """
     if standardize:
         D_scaled = StandardScaler().fit(D).transform(D)
     else:
         D_scaled = D
 
     pca = PCA(n_components='mle').fit(D_scaled)
-    return(pca)
+    return pca
 
 
 def EWAS(outcomes: list[str],
          covariates: list[str],
          predictors: list[str],
          data: pd.DataFrame,
-         remove_outliers: bool = False):
-    '''
+         remove_outliers: bool = False) -> pd.DataFrame:
+    """
     Run an environment-wide association study
 
     Parameters
@@ -56,7 +56,12 @@ def EWAS(outcomes: list[str],
         Data frame to use
     remove_outliers: bool
         Whether to remove outliers before the EWAS. Default False
-    '''
+
+    Returns
+    -------
+    res: pd.DataFrame
+        Results dataframe.
+    """
     dat_clean = data.loc[:, covariates + predictors + outcomes]
     # Log2 and normalize
     dat_clean.loc[:, outcomes] = np.log2(
@@ -75,8 +80,7 @@ def EWAS(outcomes: list[str],
                                             data=dat_clean,
                                             min_n=10,
                                             standardize_data=True)
-
-    return(res)
+    return res
 
 
 def transform_data(data: Union[pd.DataFrame, pd.Series],
@@ -84,8 +88,8 @@ def transform_data(data: Union[pd.DataFrame, pd.Series],
                    zscore_transform: bool = True,
                    grouping: Union[list[bool], None] = None) -> \
         Union[pd.DataFrame, pd.Series]:
-    '''
-    Zscore normalize dataframe
+    """
+    Data transformation with log2 transformation and zscore normalization.
 
     Parameters
     ----------
@@ -99,10 +103,10 @@ def transform_data(data: Union[pd.DataFrame, pd.Series],
         List of boolean to generate two groups on which to apply the zscore.
 
     Returns
-    ----------
+    -------
     transformed_data: pd.DataFrame
         Transformed data
-    '''
+    """
     print('=== Transforming data ===')
     transformed_data = data.copy()
     if log2_transform:
@@ -119,9 +123,9 @@ def transform_data(data: Union[pd.DataFrame, pd.Series],
                 t2 = pd.DataFrame(transformed_data.loc[not_grouping, :].
                                   apply(zscore, nan_policy='omit'))
             elif isinstance(transformed_data, pd.Series):
-                t1 = pd.Series(zscore(transformed_data.loc[grouping, :],
+                t1 = pd.Series(zscore(transformed_data.loc[grouping],
                                       nan_policy='omit'))
-                t2 = pd.Series(zscore(transformed_data.loc[not_grouping, :],
+                t2 = pd.Series(zscore(transformed_data.loc[not_grouping],
                                       nan_policy='omit'))
             else:
                 t1 = pd.DataFrame()
@@ -140,7 +144,7 @@ def transform_data(data: Union[pd.DataFrame, pd.Series],
 
 
 def cluster_corr(corr_array):
-    '''
+    """
     Rearranges the correlation matrix, corr_array, so that groups of highly
     correlated variables are next to each other.
 
@@ -153,7 +157,7 @@ def cluster_corr(corr_array):
     ----------
     idx: index
         a N index to rearrange columns and rows
-    '''
+    """
     pairwise_distances = sch.distance.pdist(corr_array)
     linkage = sch.linkage(pairwise_distances,
                           method='complete')
