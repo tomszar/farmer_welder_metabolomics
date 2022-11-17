@@ -8,29 +8,21 @@ from matplotlib import cm
 from farmer_welder.stats import stats
 
 
-def concentration_violinplot(D: Union[pd.DataFrame, pd.Series],
-                             group_by: Union[pd.Series, None],
-                             transform: bool = False,
-                             filename: str = 'metabolites_violinplot.png',
-                             **kwargs):
-    '''
-    Plot a violinplot from metabolite concentration values.
+def concentration_violinplot(dat: Union[pd.DataFrame, pd.Series],
+                             ax: plt.Axes,
+                             group_by: Union[pd.Series, None]):
+    """
+    Plot a violin plot from metabolite concentration values.
 
     Parameters
     ----------
-    D: pd.DataFrame or pd.Series
-        Dataframe with concentration values
+    dat: pd.DataFrame or pd.Series
+        Dataframe with concentration values.
+    ax: plt.Axes
+        Axis to use for the plot.
     group_by: pd.Series or None
-        Series with the group information
-    transform: bool
-        Whether to log2 transform the concentration values or not
-    filename: str
-        File name of the figure with extension
-    kwargs: Keyword arguments specific to the axes function
-    '''
-    if transform:
-        D = np.log2(D)
-
+        Series with the group information.
+    """
     def set_axis_style(ax, labels, n_groups=1):
         ax.yaxis.set_tick_params(direction='out',
                                  labelrotation=10,
@@ -52,29 +44,27 @@ def concentration_violinplot(D: Union[pd.DataFrame, pd.Series],
             ax.set_ylim(0.25, len(labels) + 0.75)
 
         ax.set_yticks(label_pos, labels=labels)
-        return(pos)
+        return pos
 
     # Violin plot
     colors = cm.get_cmap('Set2')
-    fig = plt.figure(figsize=(8, 12),
-                     dpi=300)
-    ax = fig.add_subplot(111,
-                         **kwargs)
     lab = []
-    if isinstance(D, pd.DataFrame):
-        lab = list(D.columns)
-    elif isinstance(D, pd.Series):
-        lab = list(D.name)
+    if isinstance(dat, pd.DataFrame):
+        lab = list(dat.columns)
+    elif isinstance(dat, pd.Series):
+        lab = [dat.name]
 
     if group_by is not None:
         patches = []
+        group_labels = group_by.unique()
+        group_labels.sort()
         n_groups = len(group_by.unique())
         pos = set_axis_style(ax, lab, n_groups)
         for i in range(n_groups):
             p = mlines.Line2D([], [],
                               color=colors(i),
                               marker='o',
-                              label=group_by.unique()[i],
+                              label=group_labels[i],
                               ms=10,
                               ls='-')
             patches.append(p)
@@ -85,19 +75,26 @@ def concentration_violinplot(D: Union[pd.DataFrame, pd.Series],
 
     for g in range(n_groups):
         if group_by is not None:
-            sub = group_by.unique()[g]
+            sub = group_labels[g]
             subjects = group_by == sub
             list_indices = [*range(g, len(pos), n_groups)]
             pos_m = [pos[i] for i in list_indices]
         else:
-            subjects = np.repeat(True, len(D))
+            subjects = np.repeat(True, len(dat))
             pos_m = pos
 
-        Dm = D.loc[subjects, :]
-        # Filter NA data using np.isnan
-        mask = ~np.isnan(np.array(Dm))
-        Dm_na = [d[m] for d, m in zip(np.array(Dm).T, mask.T)]
-        parts = ax.violinplot(Dm_na,
+        # Filter NA data using np.isnan if DataFrame
+        if isinstance(dat, pd.DataFrame):
+            datm = dat.loc[subjects, :]
+            mask = ~np.isnan(np.array(datm))
+            datm_na = [d[m] for d, m in zip(np.array(datm).T, mask.T)]
+        elif isinstance(dat, pd.Series):
+            datm = dat.loc[subjects]
+            datm_na = datm.dropna()
+        else:
+            datm_na = pd.DataFrame()
+
+        parts = ax.violinplot(datm_na,
                               pos_m,
                               widths=1,
                               showmedians=True,
@@ -106,10 +103,6 @@ def concentration_violinplot(D: Union[pd.DataFrame, pd.Series],
         for pc in parts['bodies']:
             pc.set_color(colors(g))
             pc.set_alpha(0.7)
-
-    fig.tight_layout()
-    fig.savefig('results/figures/' + filename,
-                dpi=600)
 
 
 def plot_pca_scores(pca_scores: np.ndarray,
@@ -123,9 +116,9 @@ def plot_pca_scores(pca_scores: np.ndarray,
     ----------
     pca_scores: np.ndarray
         scores from a PCA.
-    groups: np.array or pd.Series
+    groups: np.ndarray or pd.Series
         grouping categories to plot.
-    continuous: np.array or pd.Series
+    continuous: np.ndarray or pd.Series
         continuous variable to use for color
     filename: str
         name of figure file without extension.
@@ -162,7 +155,7 @@ def plot_pca_scores(pca_scores: np.ndarray,
                                       c=continuous,
                                       label=continuous)
             comp = comp + 2
-        # produce a legend with a cross section of continuous from the scatter
+        # produce a legend with a cross-section of continuous from the scatter
         handles, labels = scatter.legend_elements(prop="colors", alpha=0.6)
         plt.legend(handles, labels, loc="upper right", title="Sizes")
     else:
@@ -218,8 +211,8 @@ def correlation_plot(data: Union[pd.DataFrame, np.ndarray],
         cmap = 'Reds'
     im = ax.imshow(correlations,
                    cmap=cmap,
-                   vmin=vmin,
-                   vmax=vmax)
+                   vmin=-1,
+                   vmax=1)
     # Create colorbar
     cbar = ax.figure.colorbar(im, ax=ax,)
     cbar.ax.set_ylabel('Correlation coefficient',
