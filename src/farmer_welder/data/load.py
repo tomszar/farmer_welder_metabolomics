@@ -278,23 +278,39 @@ def get_exposures(cohort: str = 'farmers') -> list[str]:
     return exposures
 
 
-def get_metabolites():
+def get_metabolites(new_names: bool = False):
     """
     Get list of metabolite names.
 
-    Returns
+    Parameters
     ----------
+    new_names: bool
+        Whether to return new names to avoid problems with names that start
+        with numbers. If False, return original metabolite names.
+
+    Returns
+    -------
     metabolites: list of str
         List of metabolite names
     """
-    metabolites = ['2-Oxoisocaproate', '3-Hydroxybutyrate',
-                   '3-Hydroxyisovalerate', '3-Methyl-2-oxovalerate',
-                   'Acetate', 'Acetone', 'Alanine', 'Citrate',
-                   'Creatine', 'Formate', 'Glucose', 'Glutamine',
-                   'Glycine', 'Histidine', 'Isoleucine', 'Lactate',
-                   'Leucine', 'Lysine', 'Mannose', 'Phenylalanine',
-                   'Pyruvate', 'Succinate', 'Threonine', 'Trimethylamine',
-                   'Tryptophan', 'Tyrosine', 'Valine']
+    if new_names:
+        metabolites = ['Oxoisocaproate', 'Hydroxybutyrate',
+                       'Hydroxyisovalerate', 'Methyloxovalerate',
+                       'Acetate', 'Acetone', 'Alanine', 'Citrate',
+                       'Creatine', 'Formate', 'Glucose', 'Glutamine',
+                       'Glycine', 'Histidine', 'Isoleucine', 'Lactate',
+                       'Leucine', 'Lysine', 'Mannose', 'Phenylalanine',
+                       'Pyruvate', 'Succinate', 'Threonine', 'Trimethylamine',
+                       'Tryptophan', 'Tyrosine', 'Valine']
+    else:
+        metabolites = ['2-Oxoisocaproate', '3-Hydroxybutyrate',
+                       '3-Hydroxyisovalerate', '3-Methyl-2-oxovalerate',
+                       'Acetate', 'Acetone', 'Alanine', 'Citrate',
+                       'Creatine', 'Formate', 'Glucose', 'Glutamine',
+                       'Glycine', 'Histidine', 'Isoleucine', 'Lactate',
+                       'Leucine', 'Lysine', 'Mannose', 'Phenylalanine',
+                       'Pyruvate', 'Succinate', 'Threonine', 'Trimethylamine',
+                       'Tryptophan', 'Tyrosine', 'Valine']
     return metabolites
 
 

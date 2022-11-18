@@ -14,14 +14,15 @@ def main():
     welders = pd.read_csv('data/processed/welders.csv')
     grouping = welders.loc[:, 'project_id'] == 37016
     exposures = ['elt', 'e90', 'fe', 'mn', 'pb']
-    metabolites = load.get_metabolites()
+    og_metabolites = load.get_metabolites()
+    metabolites = load.get_metabolites(True)
+    replace_metabolites = dict(zip(og_metabolites, metabolites))
+    welders = welders.rename(columns=replace_metabolites)
     welders = clean.transform_to_dummy(welders)
     welders.loc[:, exposures] = stats.transform_data(welders.loc[:, exposures],
                                                      grouping=grouping)
     welders.loc[:, metabolites] = stats.transform_data(welders.loc[:, metabolites],
                                                        grouping=grouping)
-    # Removing metabolites starting with numbers meanwhile
-    metabolites = metabolites[4:]
     covariates = 'age + years_of_education + sexd + ' \
                  'smoked_regularly + project_idd'
 
@@ -29,7 +30,7 @@ def main():
     combinations = [(x, y) for x in exposures for y in metabolites]
     res = pd.DataFrame(combinations, columns=['exposures', 'metabolites'])
     res.loc[:, 'converged'] = True
-    res.loc[:, ['pvalue', 'coef']] = 0
+    res.loc[:, ['pvalue', 'coef', 'nobs']] = 0
     res = res.set_index(['exposures', 'metabolites'])
 
     for exp in exposures:
@@ -43,6 +44,7 @@ def main():
             res.loc[(exp, met), 'converged'] = mdf.converged
             res.loc[(exp, met), 'pvalue'] = mdf.pvalues[exp]
             res.loc[(exp, met), 'coef'] = mdf.params[exp]
+            res.loc[(exp, met), 'nobs'] = mdf.nobs
 
     # Correct for multiple testing
     converged_tests = res.loc[:, 'converged']
