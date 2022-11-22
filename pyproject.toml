@@ -1,0 +1,33 @@
+[tool.poetry]
+name = "farmer-welder-metabolomics"
+version = "0.1.0"
+description = "Metabolomics analysis of farmer welder project."
+authors = ["Tomas Gonzalez Zarzar <tomasgzarzar@pm.me>"]
+license = "GNU General Public License v3 (GPLv3)"
+readme = "README.md"
+packages = [
+    {include = "farmer_welder", from = "src"},
+]
+
+[tool.poetry.dependencies]
+python = "~3.8"
+numpy = "^1.23"
+pandas = "^1.5"
+matplotlib = "^3.6"
+scikit-learn = "^1.1.2"
+openpyxl = "^3.0.10"
+clarite = "^2.2.0"
+statsmodels = "^0.12"
+
+[tool.poetry.scripts]
+create_folders = 'farmer_welder.create_folders:main'
+merge_data = 'farmer_welder.merge_data:main'
+exploratory_PCA = 'farmer_welder.dimension_reduction:main'
+exploratory_plots = 'farmer_welder.exploratory_plots:main'
+baseline_plots = 'farmer_welder.baseline_plots:main'
+run_summary = 'farmer_welder.metabolite_summary_stats:main'
+run_analysis = 'farmer_welder.analysis:main'
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

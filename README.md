@@ -17,19 +17,19 @@ And enter the repository:
 cd farmer_welder_metabolomics
 ```
 
-## Create the conda environment
+## Create the conda environment and install
 
-With [Anaconda](https://www.anaconda.com/products/individual) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html) already installed in your system, install the conda environment using the `environment.yml` file:
+With [Conda](https://docs.conda.io/en/latest/), or [Mamba](https://mamba.readthedocs.io/en/latest/installation.html) already installed in your system, install the environment using the `environment.yml` file:
 
 ```bash
-conda env create -f environment.yml
+mamba env create -f environment.yml
 ```
 
-And then, activate the environment, and install the farmer_welder package
+Then, activate the environment, and install the farmer_welder package and dependencies with [poetry](https://python-poetry.org/docs/).
 
 ```bash
 conda activate farmer_welder
-pip install .
+poetry install
 ```
 
 ## Steps to reproduce the analysis
