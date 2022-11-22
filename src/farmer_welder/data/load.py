@@ -247,7 +247,7 @@ def load_baseline_data(cohort: str = 'farmers') -> pd.DataFrame:
     return pd.DataFrame(baseline_data)
 
 
-def get_exposures(cohort: str = 'farmers') -> list[str]:
+def get_exposures(cohort: str = 'farmers') -> list:
     """
     Get a list of exposures depending on the type of data
 
@@ -258,7 +258,7 @@ def get_exposures(cohort: str = 'farmers') -> list[str]:
 
     Returns
     ----------
-    exposures: list[str]
+    exposures: list
         A list of exposure columns
     """
     if cohort == 'farmers':
@@ -314,13 +314,13 @@ def get_metabolites(new_names: bool = False):
     return metabolites
 
 
-def get_covariates(cohort: str = 'welders') -> list[str]:
+def get_covariates(cohort: str = 'welders') -> list:
     """
     Get list of covariate names.
 
     Returns
     -------
-    covariates: list[str]
+    covariates: list
     """
     if cohort == 'welders':
         covariates = ['study_id',
@@ -356,7 +356,7 @@ def get_covariates(cohort: str = 'welders') -> list[str]:
     return covariates
 
 
-def get_metals(study: int = 5467) -> list[str]:
+def get_metals(study: int = 5467) -> list:
     """
     Get the column names for the metal level measures
     that overlap across studies.
@@ -368,7 +368,7 @@ def get_metals(study: int = 5467) -> list[str]:
 
     Returns
     -------
-    metals: list[str]
+    metals: list
     """
     if study == 5467:
         metals = ['whole blood Zn (ug/L)',
