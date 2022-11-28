@@ -3,6 +3,7 @@ import re
 import glob
 import numpy as np
 import pandas as pd
+from typing import List
 
 
 def load_raw_data(cohort: str = 'farmers') -> pd.DataFrame:
@@ -278,7 +279,7 @@ def get_exposures(cohort: str = 'farmers') -> list:
     return exposures
 
 
-def get_metabolites(new_names: bool = False):
+def get_metabolites(new_names: bool = False) -> List[str]:
     """
     Get list of metabolite names.
 

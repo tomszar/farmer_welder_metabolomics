@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import scipy.cluster.hierarchy as sch
 
-from typing import Union
+from typing import Union, List
 from scipy.stats import zscore
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
@@ -36,9 +36,9 @@ def generate_PCA(D,
     return pca
 
 
-def EWAS(outcomes: list[str],
-         covariates: list[str],
-         predictors: list[str],
+def EWAS(outcomes: List[str],
+         covariates: List[str],
+         predictors: List[str],
          data: pd.DataFrame,
          remove_outliers: bool = False) -> pd.DataFrame:
     """
@@ -86,7 +86,7 @@ def EWAS(outcomes: list[str],
 def transform_data(data: Union[pd.DataFrame, pd.Series],
                    log2_transform: bool = True,
                    zscore_transform: bool = True,
-                   grouping: Union[list[bool], None] = None) -> \
+                   grouping: Union[List[bool], None] = None) -> \
         Union[pd.DataFrame, pd.Series]:
     """
     Data transformation with log2 transformation and zscore normalization.
