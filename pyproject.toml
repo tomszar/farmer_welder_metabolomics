@@ -16,8 +16,8 @@ pandas = "^1.5"
 matplotlib = "^3.6"
 scikit-learn = "^1.1.2"
 openpyxl = "^3.0.10"
-clarite = "^2.2.0"
-statsmodels = "^0.12"
+clarite = "<=2.0.0"
+statsmodels = "^0.13"
 
 [tool.poetry.scripts]
 create_folders = 'farmer_welder.create_folders:main'
