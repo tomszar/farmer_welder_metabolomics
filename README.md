@@ -25,10 +25,11 @@ With [Conda](https://docs.conda.io/en/latest/), or [Mamba](https://mamba.readthe
 mamba env create -f environment.yml
 ```
 
-Then, activate the environment, and install the farmer_welder package and dependencies with [poetry](https://python-poetry.org/docs/).
+Then, activate the environment, load gcc, and install the farmer_welder package and dependencies with [poetry](https://python-poetry.org/docs/).
 
 ```bash
 conda activate farmer_welder
+module load gcc
 poetry install
 ```
 
