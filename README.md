@@ -29,8 +29,13 @@ Then, activate the environment, load gcc, and install the farmer_welder package 
 
 ```bash
 conda activate farmer_welder
-module load gcc
 poetry install
+```
+
+For Penn State's Roar system, make sure to run the following before installing the package
+
+```bash
+module load gcc
 ```
 
 ## Steps to reproduce the analysis
