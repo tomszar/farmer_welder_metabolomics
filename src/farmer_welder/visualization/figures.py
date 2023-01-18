@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 
-from typing import Union
+from typing import Union, List
 from matplotlib import cm
 from farmer_welder.stats import stats
 
@@ -109,7 +109,7 @@ def plot_pca_scores(pca_scores: np.ndarray,
                     groups: Union[np.ndarray, pd.Series, None] = None,
                     continuous: Union[np.ndarray, pd.Series, None] = None,
                     filename: str = 'metabolites_pca'):
-    '''
+    """
     Plot the PCA scores
 
     Parameters
@@ -122,7 +122,7 @@ def plot_pca_scores(pca_scores: np.ndarray,
         continuous variable to use for color
     filename: str
         name of figure file without extension.
-    '''
+    """
     n_vars = pca_scores.shape[1]
     n_plots = n_vars // 2
     rows = 2
@@ -171,22 +171,24 @@ def plot_pca_scores(pca_scores: np.ndarray,
 
 
 def correlation_plot(data: Union[pd.DataFrame, np.ndarray],
-                     labels: Union[list[str], None] = None,
+                     labels: Union[List[str], None] = None,
                      estimate_corr: bool = True,
                      filename: str = 'correlation_plot.png'):
-    '''
+    """
     Generation a correlation plot over all columns of data
 
     Parameters
     ----------
     data: pd.DataFrame
         Data from which to generate the correlation plot
+    labels: List[str] or None
+        Name of variables to use in the plot
     estimate_corr: bool
         Whether to estimate the correlation or not. If False,
         it's assumed that the data is a correlation or distance matrix
     filename: str
         Name of the plot file
-    '''
+    """
     if estimate_corr:
         # Generate correlation and labels
         correlations = np.array(pd.DataFrame(data).corr())

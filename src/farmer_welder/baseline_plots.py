@@ -1,5 +1,5 @@
-from .data import load
-from .visualization import figures
+from farmer_welder.data import load
+from farmer_welder.visualization import figures
 
 
 def main():
