@@ -171,9 +171,9 @@ def plot_pca_scores(pca_scores: np.ndarray,
 
 
 def correlation_plot(data: Union[pd.DataFrame, np.ndarray],
+                     ax: plt.Axes,
                      labels: Union[List[str], None] = None,
-                     estimate_corr: bool = True,
-                     filename: str = 'correlation_plot.png'):
+                     estimate_corr: bool = True):
     """
     Generation a correlation plot over all columns of data
 
@@ -181,13 +181,13 @@ def correlation_plot(data: Union[pd.DataFrame, np.ndarray],
     ----------
     data: pd.DataFrame
         Data from which to generate the correlation plot
+    ax: plt.Axes
+        Axis to use for the plot.
     labels: List[str] or None
         Name of variables to use in the plot
     estimate_corr: bool
         Whether to estimate the correlation or not. If False,
         it's assumed that the data is a correlation or distance matrix
-    filename: str
-        Name of the plot file
     """
     if estimate_corr:
         # Generate correlation and labels
@@ -204,7 +204,6 @@ def correlation_plot(data: Union[pd.DataFrame, np.ndarray],
     correlations = correlations[idx, :][:, idx]
 
     # Generate the figure
-    fig, ax = plt.subplots(figsize=(10, 8))
     vmin = correlations.min()
     vmax = correlations.max()
     if vmin < 0:
@@ -236,7 +235,3 @@ def correlation_plot(data: Union[pd.DataFrame, np.ndarray],
                       ha='right')
         ax.set_yticks(np.arange(len(correlations)),
                       labels=labels)
-    # Save figure
-    fig.tight_layout()
-    fig.savefig('results/figures/' + filename,
-                dpi=600)

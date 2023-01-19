@@ -86,7 +86,8 @@ def EWAS(outcomes: List[str],
 def transform_data(data: Union[pd.DataFrame, pd.Series],
                    log2_transform: bool = True,
                    zscore_transform: bool = True,
-                   grouping: Union[List[bool], None] = None) -> \
+                   grouping: Union[List[bool], None] = None,
+                   to_print: bool = True) -> \
         Union[pd.DataFrame, pd.Series]:
     """
     Data transformation with log2 transformation and zscore normalization.
@@ -101,20 +102,25 @@ def transform_data(data: Union[pd.DataFrame, pd.Series],
         Whether to zscore transform or not.
     grouping: Union[list[bool], None]
         List of boolean to generate two groups on which to apply the zscore.
+    to_print: bool
+        Print to screen information of function.
 
     Returns
     -------
     transformed_data: pd.DataFrame
         Transformed data
     """
-    print('=== Transforming data ===')
+    if to_print:
+        print('=== Transforming data ===')
     transformed_data = data.copy()
     if log2_transform:
-        print('Log2 transformation ...')
+        if to_print:
+            print('Log2 transformation ...')
         transformed_data = np.log2(transformed_data + (1 / 100000000))
 
     if zscore_transform:
-        print('Zscore transformation ...')
+        if to_print:
+            print('Zscore transformation ...')
         if grouping is not None:
             not_grouping = [not elem for elem in grouping]
             if isinstance(transformed_data, pd.DataFrame):
@@ -138,8 +144,8 @@ def transform_data(data: Union[pd.DataFrame, pd.Series],
             elif isinstance(transformed_data, pd.Series):
                 transformed_data = pd.Series(zscore(transformed_data,
                                                     nan_policy='omit'))
-
-    print('')
+    if to_print:
+        print('')
     return transformed_data
 
 

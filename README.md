@@ -53,11 +53,10 @@ Then, create the merged data files used for most analysis, by typing:
 merge_data
 ```
 
-To generate some descriptive plots and summary stats, run:
+To generate some descriptive plots, run:
 
 ```bash
-baseline_plots
-run_summary
+exploratory_plots
 ```
 
 Finally, to run the analysis, run:
