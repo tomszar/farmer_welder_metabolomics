@@ -166,9 +166,11 @@ def _load_raw_welders() -> pd.DataFrame:
             project_data = copy_from_baseline(project_data,
                                               'research_subject')
             # Read wh exposure data
+            # pelt is the measurement similar to e90 from the
+            # old study (3706)
             wh_exposure = pd.read_csv(
                 'data/raw/UNC WH Exposure.csv').\
-                rename(columns={'elt (mg-years/m3)': 'elt'})
+                rename(columns={'pelt (mg-years/m3)': 'elt'})
             project_data = pd.merge(project_data,
                                     wh_exposure,
                                     how='left',
@@ -176,9 +178,11 @@ def _load_raw_welders() -> pd.DataFrame:
                                     right_on='subject_id')
 
             # Read seq exposure data
+            # pe90 is the measurement similar to e90 from the
+            # old study (3706)
             seq_exposure = pd.read_csv(
                 'data/raw/UNC SEQ Exposure.csv').\
-                rename(columns={'e90 (mg/m3 hours)': 'e90',
+                rename(columns={'pe90 (mg/m3 hours)': 'e90',
                                 'hrsw (hours)': 'hrsw'}).\
                 replace({'Baseline': 'baseline_arm_1',
                          '18 Month Follow-Up': '18_month_followup_arm_1'})
