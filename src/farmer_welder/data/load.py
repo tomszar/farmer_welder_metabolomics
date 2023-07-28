@@ -166,7 +166,7 @@ def _load_raw_welders() -> pd.DataFrame:
             project_data = copy_from_baseline(project_data,
                                               'research_subject')
             # Read wh exposure data
-            # pelt is the measurement similar to e90 from the
+            # pelt is the measurement similar to elt from the
             # old study (3706)
             wh_exposure = pd.read_csv(
                 'data/raw/UNC WH Exposure.csv').\
